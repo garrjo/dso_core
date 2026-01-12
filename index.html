@@ -879,7 +879,7 @@
         // ============================================
         // DATA LOGGING (Core Position History)
         // ============================================
-        function logCoreData(corePosition) {
+        function logCoreData(corePosition, earthquakes = [], predictions = [], stressZone = null) {
             if (!corePosition) return;
 
             const now = new Date();
@@ -897,13 +897,37 @@
                 if (deltaAzimuth < -180) deltaAzimuth += 360;
             }
 
+            // Build comprehensive log entry
             const entry = {
                 timestamp: now.toISOString(),
-                offset: Math.round(offset * 1000) / 1000,
-                azimuth: Math.round(azimuth * 10) / 10,
-                deltaOffset: Math.round(deltaOffset * 1000) / 1000,
-                deltaAzimuth: Math.round(deltaAzimuth * 10) / 10,
-                eqCount: corePosition.earthquake_count
+                core: {
+                    offset: Math.round(offset * 1000) / 1000,
+                    azimuth: Math.round(azimuth * 10) / 10,
+                    deltaOffset: Math.round(deltaOffset * 1000) / 1000,
+                    deltaAzimuth: Math.round(deltaAzimuth * 10) / 10,
+                    eqCount: corePosition.earthquake_count
+                },
+                stressZone: stressZone ? {
+                    lat: Math.round(stressZone.lat * 100) / 100,
+                    lon: Math.round(stressZone.lon * 100) / 100,
+                    confidence: Math.round(stressZone.confidence * 100) / 100,
+                    region: stressZone.region || null
+                } : null,
+                predictions: predictions.map(p => ({
+                    day: p.day,
+                    lat: Math.round(p.lat * 100) / 100,
+                    lon: Math.round(p.lon * 100) / 100,
+                    mag: p.predictedMag,
+                    confidence: Math.round(p.confidence * 100) / 100
+                })),
+                earthquakes: earthquakes.slice(0, 10).map(eq => ({
+                    time: eq.properties.time, // USGS timestamp (ms since epoch)
+                    mag: eq.properties.mag,
+                    lat: eq.geometry.coordinates[1],
+                    lon: eq.geometry.coordinates[0],
+                    depth: eq.geometry.coordinates[2],
+                    place: eq.properties.place
+                }))
             };
 
             state.dataLog.push(entry);
@@ -986,16 +1010,23 @@
             if (countEl) countEl.textContent = state.dataLog.length;
 
             if (previewEl && state.dataLog.length > 0) {
-                // Show last 10 entries
+                // Show last 10 entries (handle both old flat and new nested format)
                 const recent = state.dataLog.slice(-10).reverse();
                 previewEl.innerHTML = recent.map(e => {
                     const time = new Date(e.timestamp).toLocaleTimeString();
-                    const deltaClass = e.deltaOffset >= 0 ? 'positive' : 'negative';
+                    // Support both old flat format and new nested format
+                    const core = e.core || e;
+                    const offset = core.offset;
+                    const azimuth = core.azimuth;
+                    const deltaOffset = core.deltaOffset;
+                    const deltaClass = deltaOffset >= 0 ? 'positive' : 'negative';
+                    const predCount = e.predictions ? e.predictions.length : 0;
                     return `<div class="datalog-row">
                         <span class="datalog-time">${time}</span>
-                        <span class="datalog-offset">${e.offset.toFixed(2)}</span>
-                        <span class="datalog-az">${e.azimuth.toFixed(0)}°</span>
-                        <span class="datalog-delta ${deltaClass}">${e.deltaOffset >= 0 ? '+' : ''}${e.deltaOffset.toFixed(3)}</span>
+                        <span class="datalog-offset">${offset.toFixed(2)}</span>
+                        <span class="datalog-az">${azimuth.toFixed(0)}°</span>
+                        <span class="datalog-delta ${deltaClass}">${deltaOffset >= 0 ? '+' : ''}${deltaOffset.toFixed(3)}</span>
+                        ${predCount ? `<span style="color:var(--accent-purple);font-size:0.8em">${predCount}p</span>` : ''}
                     </div>`;
                 }).join('');
             } else if (previewEl) {
@@ -2834,8 +2865,8 @@
                 updateEarthquakeMarkers(earthquakes);
                 update7DayPredictionMarkers(state.dailyPredictions);
 
-                // Log core data for tracking
-                logCoreData(state.corePosition);
+                // Log core data for tracking (with predictions and EQ data)
+                logCoreData(state.corePosition, earthquakes, state.dailyPredictions, state.stressZone);
 
                 updateStatus('Live', false);
                 log('Data update complete', 'success');
