@@ -779,14 +779,72 @@
 
         // Load persisted log from localStorage
         const DATALOG_KEY = 'dso_core_datalog';
+
+        // Remote logging - JSONBin.io (free, no auth required for public bins)
+        const REMOTE_LOG = {
+            enabled: true,
+            binId: null,
+            endpoint: 'https://api.jsonbin.io/v3/b',
+            lastSync: null
+        };
+
         try {
             const stored = localStorage.getItem(DATALOG_KEY);
             if (stored) {
                 state.dataLog = JSON.parse(stored);
                 console.log(`Loaded ${state.dataLog.length} log entries from storage`);
             }
+            const binId = localStorage.getItem('dso_core_binId');
+            if (binId) REMOTE_LOG.binId = binId;
         } catch (e) {
             console.warn('Failed to load datalog:', e);
+        }
+
+        // Remote sync function - pushes full log to JSONBin
+        async function syncToRemote() {
+            if (!REMOTE_LOG.enabled || state.dataLog.length === 0) return;
+
+            const payload = {
+                source: 'dso-core-observatory',
+                updated: new Date().toISOString(),
+                entries: state.dataLog.length,
+                log: state.dataLog
+            };
+
+            try {
+                let response;
+                if (REMOTE_LOG.binId) {
+                    // Update existing bin
+                    response = await fetch(`${REMOTE_LOG.endpoint}/${REMOTE_LOG.binId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                } else {
+                    // Create new bin
+                    response = await fetch(REMOTE_LOG.endpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Bin-Private': 'false'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        REMOTE_LOG.binId = data.metadata.id;
+                        localStorage.setItem('dso_core_binId', REMOTE_LOG.binId);
+                        log(`Remote log created: ${REMOTE_LOG.binId}`, 'success');
+                    }
+                }
+
+                if (response.ok) {
+                    REMOTE_LOG.lastSync = new Date().toISOString();
+                    console.log(`Synced ${state.dataLog.length} entries to remote`);
+                }
+            } catch (e) {
+                console.warn('Remote sync failed:', e.message);
+            }
         }
 
         // Colors for 7-day predictions (day 1 = brightest, day 7 = dimmest)
@@ -860,6 +918,11 @@
 
             log(`Logged: ${offset.toFixed(2)} km @ ${azimuth.toFixed(1)}° (Δ ${deltaOffset >= 0 ? '+' : ''}${deltaOffset.toFixed(3)} km, ${deltaAzimuth >= 0 ? '+' : ''}${deltaAzimuth.toFixed(1)}°)`, 'info');
             updateDataLogUI();
+
+            // Auto-sync to remote every 5 entries
+            if (state.dataLog.length % 5 === 0) {
+                syncToRemote();
+            }
         }
 
         function exportDataLogCSV() {
