@@ -712,6 +712,7 @@
                 <div class="card-header">
                     <h2>Core Position Log</h2>
                     <span class="badge" id="datalog-count">0</span>
+                    <a id="remote-log-link" href="#" target="_blank" style="display:none; font-size:0.7em; color:var(--accent-green); margin-left:8px;">📡</a>
                 </div>
                 <div id="datalog-preview" class="datalog-preview">
                     <div style="color: var(--text-secondary); font-style: italic;">No data logged yet</div>
@@ -863,9 +864,20 @@
                 if (response.ok) {
                     REMOTE_LOG.lastSync = new Date().toISOString();
                     console.log(`Synced ${state.dataLog.length} entries to remote`);
+                    updateRemoteLogUI();
                 }
             } catch (e) {
                 console.warn('Remote sync failed:', e.message);
+            }
+        }
+
+        function updateRemoteLogUI() {
+            const linkEl = document.getElementById('remote-log-link');
+            if (linkEl && REMOTE_LOG.binId) {
+                const url = `https://api.jsonbin.io/v3/b/${REMOTE_LOG.binId}/latest`;
+                linkEl.href = url;
+                linkEl.textContent = REMOTE_LOG.binId.slice(0, 8) + '...';
+                linkEl.style.display = 'inline';
             }
         }
 
@@ -965,8 +977,8 @@
             log(`Logged: ${offset.toFixed(2)} km @ ${azimuth.toFixed(1)}° (Δ ${deltaOffset >= 0 ? '+' : ''}${deltaOffset.toFixed(3)} km, ${deltaAzimuth >= 0 ? '+' : ''}${deltaAzimuth.toFixed(1)}°)`, 'info');
             updateDataLogUI();
 
-            // Auto-sync to remote every 5 entries
-            if (state.dataLog.length % 5 === 0) {
+            // Auto-sync to remote (first entry + every 5 entries)
+            if (state.dataLog.length === 1 || state.dataLog.length % 5 === 0) {
                 syncToRemote();
             }
         }
@@ -2923,8 +2935,12 @@
 
             // Initialize data log UI with any persisted data
             updateDataLogUI();
+            updateRemoteLogUI();
             if (state.dataLog.length > 0) {
                 log(`Restored ${state.dataLog.length} previous log entries`, 'info');
+            }
+            if (REMOTE_LOG.binId) {
+                log(`Remote log: ${REMOTE_LOG.binId}`, 'info');
             }
 
             // Load initial data
