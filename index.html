@@ -800,6 +800,28 @@
             console.warn('Failed to load datalog:', e);
         }
 
+        // Remote timestamp for accurate logging
+        let cachedRemoteTime = null;
+        let timeOffset = 0; // Diff between local and remote
+
+        async function getRemoteTimestamp() {
+            try {
+                const response = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC');
+                if (response.ok) {
+                    const data = await response.json();
+                    const remoteNow = new Date(data.utc_datetime);
+                    const localNow = new Date();
+                    timeOffset = remoteNow.getTime() - localNow.getTime();
+                    cachedRemoteTime = data.utc_datetime;
+                    return data.utc_datetime;
+                }
+            } catch (e) {
+                console.warn('Remote time fetch failed, using local');
+            }
+            // Fallback: apply cached offset to local time
+            return new Date(Date.now() + timeOffset).toISOString();
+        }
+
         // Remote sync function - pushes full log to JSONBin
         async function syncToRemote() {
             if (!REMOTE_LOG.enabled || state.dataLog.length === 0) return;
@@ -879,10 +901,10 @@
         // ============================================
         // DATA LOGGING (Core Position History)
         // ============================================
-        function logCoreData(corePosition, earthquakes = [], predictions = [], stressZone = null) {
+        async function logCoreData(corePosition, earthquakes = [], predictions = [], stressZone = null) {
             if (!corePosition) return;
 
-            const now = new Date();
+            const timestamp = await getRemoteTimestamp();
             const offset = corePosition.magnitude_km;
             const azimuth = corePosition.azimuth_degrees;
 
@@ -899,7 +921,7 @@
 
             // Build comprehensive log entry
             const entry = {
-                timestamp: now.toISOString(),
+                timestamp: timestamp,
                 core: {
                     offset: Math.round(offset * 1000) / 1000,
                     azimuth: Math.round(azimuth * 10) / 10,
@@ -2866,7 +2888,7 @@
                 update7DayPredictionMarkers(state.dailyPredictions);
 
                 // Log core data for tracking (with predictions and EQ data)
-                logCoreData(state.corePosition, earthquakes, state.dailyPredictions, state.stressZone);
+                await logCoreData(state.corePosition, earthquakes, state.dailyPredictions, state.stressZone);
 
                 updateStatus('Live', false);
                 log('Data update complete', 'success');
