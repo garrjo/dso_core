@@ -1,4 +1,4 @@
-DSO Seismic Prediction Model
+*DSO Seismic Prediction Model*
 Core Physics
 The DSO (Drag-Scale-Object) framework applies a universal E-pooling function to earthquake forecasting:
 
