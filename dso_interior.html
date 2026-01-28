@@ -1,0 +1,2145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSO - Interior Structure Visualization</title>
+    <link rel="stylesheet" href="shared/styles.css">
+    <script src="shared/nav.js"></script>
+    <style>
+        .interior-container {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 20px;
+            height: calc(100vh - 200px);
+            min-height: 650px;
+        }
+
+        .visualization-panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #interiorCanvas {
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+        }
+
+        #interiorCanvas:active {
+            cursor: grabbing;
+        }
+
+        .viz-overlay {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(10, 10, 26, 0.9);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 0.85em;
+        }
+
+        .viz-overlay h4 {
+            color: var(--accent-blue);
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+
+        .viz-mode-btns {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .viz-mode-btn {
+            padding: 6px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            color: var(--text-primary);
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .viz-mode-btn:hover, .viz-mode-btn.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        .depth-indicator {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(10, 10, 26, 0.9);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            width: 60px;
+        }
+
+        .depth-scale {
+            height: 300px;
+            width: 20px;
+            margin: 0 auto;
+            border-radius: 10px;
+            background: linear-gradient(to bottom,
+                #8B4513 0%,
+                #CD853F 15%,
+                #D2691E 35%,
+                #FF6600 55%,
+                #FF8C00 70%,
+                #FFD700 85%,
+                #F4D03F 100%
+            );
+            position: relative;
+        }
+
+        .depth-marker {
+            position: absolute;
+            right: 25px;
+            font-size: 0.7em;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .control-panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .control-section {
+            margin-bottom: 25px;
+        }
+
+        .control-section h3 {
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .layer-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .layer-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .layer-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+
+        .layer-name {
+            font-size: 0.85em;
+        }
+
+        .layer-toggle input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .structure-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        .structure-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .structure-name {
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .structure-type {
+            font-size: 0.7em;
+            padding: 2px 8px;
+            background: var(--accent-blue);
+            border-radius: 10px;
+            color: white;
+        }
+
+        .structure-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+            font-size: 0.75em;
+        }
+
+        .structure-stat {
+            color: var(--text-secondary);
+        }
+
+        .structure-stat span {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .drag-flow-legend {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .flow-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8em;
+        }
+
+        .flow-arrow {
+            font-size: 1.2em;
+        }
+
+        .viscosity-bar {
+            height: 8px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .viscosity-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        .info-panel {
+            margin-top: 20px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .info-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .info-card h4 {
+            color: var(--accent-blue);
+            margin-bottom: 10px;
+            font-size: 0.95em;
+        }
+
+        .drag-property {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.85em;
+        }
+
+        .drag-property:last-child {
+            border-bottom: none;
+        }
+
+        .drag-value {
+            font-weight: 600;
+        }
+
+        .drag-value.high { color: var(--accent-red); }
+        .drag-value.medium { color: var(--accent-yellow); }
+        .drag-value.low { color: var(--accent-green); }
+
+        @media (max-width: 1000px) {
+            .interior-container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            .visualization-panel {
+                height: 500px;
+            }
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body data-dso-page="interior">
+    <div class="page-container">
+        <div class="page-header">
+            <h1>&#127757; Interior Structure Visualization</h1>
+            <p class="subtitle">Earth's internal architecture and drag propagation pathways</p>
+        </div>
+
+        <div class="interior-container">
+            <!-- Main Visualization -->
+            <div class="visualization-panel">
+                <canvas id="interiorCanvas"></canvas>
+
+                <div class="viz-overlay">
+                    <h4>View Mode</h4>
+                    <div class="viz-mode-btns">
+                        <button class="viz-mode-btn active" data-mode="cross-section">Cross-Section</button>
+                        <button class="viz-mode-btn" data-mode="global">Global View</button>
+                        <button class="viz-mode-btn" data-mode="cmb">CMB Detail</button>
+                        <button class="viz-mode-btn" data-mode="drag-flow">Drag Flow</button>
+                    </div>
+                </div>
+
+                <div class="depth-indicator">
+                    <div class="depth-scale">
+                        <span class="depth-marker" style="top: 0%;">0 km</span>
+                        <span class="depth-marker" style="top: 15%;">410</span>
+                        <span class="depth-marker" style="top: 35%;">660</span>
+                        <span class="depth-marker" style="top: 55%;">2900</span>
+                        <span class="depth-marker" style="top: 85%;">5150</span>
+                        <span class="depth-marker" style="top: 100%;">6371</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <div class="control-section">
+                    <h3>Layer Visibility</h3>
+
+                    <div class="layer-toggle">
+                        <div class="layer-info">
+                            <div class="layer-color" style="background: #8B4513;"></div>
+                            <span class="layer-name">Lithosphere</span>
+                        </div>
+                        <input type="checkbox" checked data-layer="lithosphere">
+                    </div>
+
+                    <div class="layer-toggle">
+                        <div class="layer-info">
+                            <div class="layer-color" style="background: #CD853F;"></div>
+                            <span class="layer-name">Upper Mantle</span>
+                        </div>
+                        <input type="checkbox" checked data-layer="upper-mantle">
+                    </div>
+
+                    <div class="layer-toggle">
+                        <div class="layer-info">
+                            <div class="layer-color" style="background: #D2691E;"></div>
+                            <span class="layer-name">Lower Mantle</span>
+                        </div>
+                        <input type="checkbox" checked data-layer="lower-mantle">
+                    </div>
+
+                    <div class="layer-toggle">
+                        <div class="layer-info">
+                            <div class="layer-color" style="background: #FF6600;"></div>
+                            <span class="layer-name">D" Layer</span>
+                        </div>
+                        <input type="checkbox" checked data-layer="d-layer">
+                    </div>
+
+                    <div class="layer-toggle">
+                        <div class="layer-info">
+                            <div class="layer-color" style="background: #FF8C00;"></div>
+                            <span class="layer-name">Outer Core (Liquid)</span>
+                        </div>
+                        <input type="checkbox" checked data-layer="outer-core">
+                    </div>
+
+                    <div class="layer-toggle">
+                        <div class="layer-info">
+                            <div class="layer-color" style="background: #F4D03F;"></div>
+                            <span class="layer-name">Inner Core (Solid)</span>
+                        </div>
+                        <input type="checkbox" checked data-layer="inner-core">
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>Anomalous Structures</h3>
+
+                    <div class="layer-toggle">
+                        <div class="layer-info">
+                            <div class="layer-color" style="background: #9b59b6;"></div>
+                            <span class="layer-name">LLSVPs</span>
+                        </div>
+                        <input type="checkbox" checked data-layer="llsvps">
+                    </div>
+
+                    <div class="layer-toggle">
+                        <div class="layer-info">
+                            <div class="layer-color" style="background: #3498db;"></div>
+                            <span class="layer-name">Subducted Slabs</span>
+                        </div>
+                        <input type="checkbox" checked data-layer="slabs">
+                    </div>
+
+                    <div class="layer-toggle">
+                        <div class="layer-info">
+                            <div class="layer-color" style="background: #e67e22;"></div>
+                            <span class="layer-name">ULVZs</span>
+                        </div>
+                        <input type="checkbox" checked data-layer="ulvzs">
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>Magma Systems (Always On)</h3>
+                    <div style="font-size: 0.8em; color: var(--text-secondary); padding: 10px; background: var(--bg-tertiary); border-radius: 6px;">
+                        <div style="margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 20px; height: 3px; background: #ff6600; border-radius: 2px;"></div>
+                            <span>Yellowstone System</span>
+                        </div>
+                        <div style="margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 20px; height: 3px; background: #ff6600; border-radius: 2px;"></div>
+                            <span>Hawaii System</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 20px; height: 3px; background: #ff6600; border-radius: 2px;"></div>
+                            <span>Iceland System</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>Drag Flow Properties</h3>
+
+                    <div class="drag-flow-legend">
+                        <div class="flow-item">
+                            <span class="flow-arrow" style="color: #4ecdc4;">&#10140;</span>
+                            <span>Fast (low drag)</span>
+                        </div>
+                        <div class="flow-item">
+                            <span class="flow-arrow" style="color: #f39c12;">&#10140;</span>
+                            <span>Medium</span>
+                        </div>
+                        <div class="flow-item">
+                            <span class="flow-arrow" style="color: #e74c3c;">&#10140;</span>
+                            <span>Slow (high drag)</span>
+                        </div>
+                        <div class="flow-item">
+                            <span class="flow-arrow" style="color: #9b59b6;">&#8856;</span>
+                            <span>Blocked</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>Selected Structure</h3>
+                    <div class="structure-card" id="selectedStructure">
+                        <div class="structure-header">
+                            <span class="structure-name">Pacific LLSVP</span>
+                            <span class="structure-type">LLSVP</span>
+                        </div>
+                        <div class="structure-stats">
+                            <div class="structure-stat">Depth: <span>2900 km</span></div>
+                            <div class="structure-stat">Extent: <span>~5000 km</span></div>
+                            <div class="structure-stat">Density: <span>-0.6%</span></div>
+                            <div class="structure-stat">Drag: <span>Channeling</span></div>
+                        </div>
+                        <div class="viscosity-bar">
+                            <div class="viscosity-fill" style="width: 30%; background: linear-gradient(90deg, #9b59b6, #8e44ad);"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Cards -->
+        <div class="info-panel">
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>&#127754; Liquid Outer Core</h4>
+                    <div class="drag-property">
+                        <span>Viscosity</span>
+                        <span class="drag-value low">~10<sup>-2</sup> Pa·s (water-like)</span>
+                    </div>
+                    <div class="drag-property">
+                        <span>Stress Transmission</span>
+                        <span class="drag-value low">FAST (seconds)</span>
+                    </div>
+                    <div class="drag-property">
+                        <span>Local Drag</span>
+                        <span class="drag-value low">LOW</span>
+                    </div>
+                    <div class="drag-property">
+                        <span>Drag-Scale Role</span>
+                        <span>Transmits but doesn't accumulate</span>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <h4>&#127755; Solid Mantle</h4>
+                    <div class="drag-property">
+                        <span>Viscosity</span>
+                        <span class="drag-value high">~10<sup>21-23</sup> Pa·s</span>
+                    </div>
+                    <div class="drag-property">
+                        <span>Stress Transmission</span>
+                        <span class="drag-value high">SLOW (millions of years)</span>
+                    </div>
+                    <div class="drag-property">
+                        <span>Local Drag</span>
+                        <span class="drag-value high">HIGH accumulation</span>
+                    </div>
+                    <div class="drag-property">
+                        <span>Drag-Scale Role</span>
+                        <span>Primary stress storage</span>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <h4>&#128293; ULVZs (Partial Melt)</h4>
+                    <div class="drag-property">
+                        <span>Viscosity</span>
+                        <span class="drag-value medium">Variable (10<sup>18-20</sup> Pa·s)</span>
+                    </div>
+                    <div class="drag-property">
+                        <span>Stress Transmission</span>
+                        <span class="drag-value medium">VARIABLE</span>
+                    </div>
+                    <div class="drag-property">
+                        <span>Local Drag</span>
+                        <span class="drag-value medium">Creates "puddles"</span>
+                    </div>
+                    <div class="drag-property">
+                        <span>Drag-Scale Role</span>
+                        <span>Stress concentrators / weak zones</span>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <h4>&#128168; LLSVPs (The Blobs)</h4>
+                    <div class="drag-property">
+                        <span>Viscosity</span>
+                        <span class="drag-value">Anomalous (uncertain)</span>
+                    </div>
+                    <div class="drag-property">
+                        <span>Composition</span>
+                        <span>Thermochemical pile</span>
+                    </div>
+                    <div class="drag-property">
+                        <span>Effect</span>
+                        <span class="drag-value medium">Channeling / Blocking</span>
+                    </div>
+                    <div class="drag-property">
+                        <span>Drag-Scale Role</span>
+                        <span>Routes or deflects stress flow</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Drag Flow Explanation -->
+        <div class="card" style="margin-top: 20px;">
+            <div class="card-header">
+                <h2><span class="icon">&#9889;</span> Drag Flow Through Earth's Interior</h2>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h4 style="color: var(--accent-blue); margin-bottom: 10px;">The Drag-Scale Interior Model</h4>
+                    <p style="font-size: 0.9em; color: var(--text-secondary); line-height: 1.6;">
+                        External drag from Sun/Moon doesn't act uniformly on the Earth. It propagates through
+                        the interior at rates determined by local viscosity:
+                    </p>
+                    <ul style="font-size: 0.85em; color: var(--text-secondary); margin-top: 10px; line-height: 1.8;">
+                        <li><strong>Liquid outer core:</strong> Near-instant transmission, no accumulation</li>
+                        <li><strong>Solid mantle:</strong> Slow transmission, stress builds and stores</li>
+                        <li><strong>LLSVPs:</strong> Deflect flow like boulders in a river</li>
+                        <li><strong>Subducted slabs:</strong> Cold, dense - create downward drag channels</li>
+                        <li><strong>Plumes:</strong> Hot, buoyant - create upward pathways</li>
+                        <li><strong>ULVZs:</strong> Partial melt "puddles" that concentrate stress</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 style="color: var(--accent-blue); margin-bottom: 10px;">Prediction Implications</h4>
+                    <p style="font-size: 0.9em; color: var(--text-secondary); line-height: 1.6;">
+                        When external drag aligns with internal structure, predictability improves:
+                    </p>
+                    <div style="background: var(--bg-tertiary); border-radius: 8px; padding: 15px; margin-top: 10px;">
+                        <div style="margin-bottom: 10px;">
+                            <strong style="color: var(--accent-green);">HIGH predictability:</strong>
+                            <span style="font-size: 0.85em; color: var(--text-secondary);">
+                                External drag + slab alignment + channel pathway
+                            </span>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <strong style="color: var(--accent-yellow);">MEDIUM predictability:</strong>
+                            <span style="font-size: 0.85em; color: var(--text-secondary);">
+                                External drag present but structure misaligned
+                            </span>
+                        </div>
+                        <div>
+                            <strong style="color: var(--accent-red);">LOW predictability:</strong>
+                            <span style="font-size: 0.85em; color: var(--text-secondary);">
+                                LLSVP blocking, no channel alignment
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Material-Specific Drag Constants -->
+        <div class="card" style="margin-top: 20px;">
+            <div class="card-header">
+                <h2><span class="icon">&#128300;</span> Material-Specific Drag Constants (Drag-Scale Derived)</h2>
+            </div>
+            <p style="font-size: 0.9em; color: var(--text-secondary); margin-bottom: 15px;">
+                These constants are derived from Drag-Scale principles, not classical fluid dynamics.
+                They describe how stress propagates through each medium.
+            </p>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.85em;">
+                    <thead>
+                        <tr style="background: var(--bg-tertiary); text-align: left;">
+                            <th style="padding: 12px; border-bottom: 2px solid var(--border-color);">Layer/Structure</th>
+                            <th style="padding: 12px; border-bottom: 2px solid var(--border-color);">Kappa (Drag)</th>
+                            <th style="padding: 12px; border-bottom: 2px solid var(--border-color);">Tau (Relaxation)</th>
+                            <th style="padding: 12px; border-bottom: 2px solid var(--border-color);">Sigma (Storage)</th>
+                            <th style="padding: 12px; border-bottom: 2px solid var(--border-color);">Lambda (Transmission)</th>
+                            <th style="padding: 12px; border-bottom: 2px solid var(--border-color);">Mechanism</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dragConstantsTable">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Regional Timing Signatures -->
+        <div class="card" style="margin-top: 20px;">
+            <div class="card-header">
+                <h2><span class="icon">&#9200;</span> Regional Timing Signatures</h2>
+            </div>
+            <p style="font-size: 0.9em; color: var(--text-secondary); margin-bottom: 15px;">
+                Different regions show different timing signatures based on what the stress vector passes through.
+                Volcanic regions respond rapidly; cold slab regions have delayed responses.
+            </p>
+            <div id="regionalTimingCards" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- Testable Predictions -->
+        <div class="card" style="margin-top: 20px;">
+            <div class="card-header">
+                <h2><span class="icon">&#128269;</span> Testable Predictions</h2>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div style="background: var(--bg-tertiary); border-radius: 8px; padding: 20px;">
+                    <h4 style="color: #e74c3c; margin-bottom: 10px;">Volcanic Regions (Hot Path)</h4>
+                    <ul style="font-size: 0.85em; color: var(--text-secondary); line-height: 1.8;">
+                        <li>Expected response window: <strong>6-48 hours</strong></li>
+                        <li>Lower kappa = less resistance to stress flow</li>
+                        <li>Low sigma = minimal stress storage</li>
+                        <li>High lambda = efficient transmission</li>
+                        <li>Examples: Hawaii, Iceland, Yellowstone influence zones</li>
+                    </ul>
+                    <div style="margin-top: 10px; padding: 10px; background: rgba(231, 76, 60, 0.1); border-radius: 6px; border-left: 3px solid #e74c3c;">
+                        <strong style="font-size: 0.8em;">Prediction:</strong>
+                        <span style="font-size: 0.8em; color: var(--text-secondary);">
+                            Events near Hawaii should correlate with lunar/solar triggers within 24-48 hours
+                        </span>
+                    </div>
+                </div>
+                <div style="background: var(--bg-tertiary); border-radius: 8px; padding: 20px;">
+                    <h4 style="color: #3498db; margin-bottom: 10px;">Cold Slab Regions (Cold Path)</h4>
+                    <ul style="font-size: 0.85em; color: var(--text-secondary); line-height: 1.8;">
+                        <li>Expected response window: <strong>1-4 weeks</strong></li>
+                        <li>Higher kappa = more resistance to stress flow</li>
+                        <li>High sigma = significant stress storage</li>
+                        <li>Low lambda = poor transmission (stress builds)</li>
+                        <li>Examples: Farallon slab, Tethyan slabs, Pacific slab graveyard</li>
+                    </ul>
+                    <div style="margin-top: 10px; padding: 10px; background: rgba(52, 152, 219, 0.1); border-radius: 6px; border-left: 3px solid #3498db;">
+                        <strong style="font-size: 0.8em;">Prediction:</strong>
+                        <span style="font-size: 0.8em; color: var(--text-secondary);">
+                            Deep events near subducted slabs should show 1-3 week delay from trigger alignment
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top: 20px; background: var(--bg-tertiary); border-radius: 8px; padding: 20px;">
+                <h4 style="color: #9b59b6; margin-bottom: 10px;">LLSVP Channeling Effect</h4>
+                <p style="font-size: 0.85em; color: var(--text-secondary); line-height: 1.6;">
+                    Regions above African or Pacific LLSVPs should show enhanced predictability when external drag
+                    aligns with the LLSVP margins. The "channeling" effect routes stress preferentially, creating
+                    more predictable pathways. Test: Compare hit rates for events above LLSVPs vs. away from LLSVPs.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =====================================================
+        // INTERIOR VISUALIZATION
+        // =====================================================
+
+        // =====================================================
+        // MATERIAL-SPECIFIC DRAG CONSTANTS (Drag-Scale Derived)
+        // =====================================================
+        // These are NOT borrowed from classical fluid dynamics.
+        // They represent how stress propagates through each medium
+        // in terms of:
+        //   - kappa (drag coefficient): resistance to stress flow
+        //   - tau (relaxation time): characteristic response time
+        //   - sigma (stress accumulation): capacity to store stress
+        //   - lambda (transmission efficiency): how much stress passes through
+
+        const DRAG_SCALE_CONSTANTS = {
+            // Solid inner core - iron crystal matrix
+            innerCore: {
+                name: 'Inner Core (Solid Iron)',
+                kappa: 0.95,        // Very high resistance (nearly rigid)
+                tau: 1e12,          // ~30,000 years relaxation
+                sigma: 0.10,        // Low accumulation (too rigid)
+                lambda: 0.85,       // High transmission (elastic waves)
+                thermal: 'cold',    // Relative to outer core
+                mechanism: 'elastic',
+                color: '#F4D03F',
+                description: 'Solid iron crystal - transmits elastically, minimal drag interaction'
+            },
+
+            // Liquid outer core - convecting iron
+            outerCore: {
+                name: 'Outer Core (Liquid Iron)',
+                kappa: 0.02,        // Very low resistance (fluid)
+                tau: 1e2,           // ~minutes relaxation
+                sigma: 0.01,        // Almost no accumulation
+                lambda: 0.99,       // Near-perfect transmission
+                thermal: 'hot',
+                mechanism: 'convective',
+                color: '#FF6600',
+                description: 'Liquid iron - rapid stress transmission, no storage'
+            },
+
+            // D" layer - thermal boundary layer
+            dLayer: {
+                name: 'D" Layer (CMB Boundary)',
+                kappa: 0.45,        // Moderate-high (complex rheology)
+                tau: 1e8,           // ~3 years relaxation
+                sigma: 0.60,        // Significant accumulation
+                lambda: 0.55,       // Partial transmission
+                thermal: 'gradient',
+                mechanism: 'thermo-chemical',
+                color: '#D2691E',
+                description: 'Thermal boundary - stress concentrator, phase transitions'
+            },
+
+            // Lower mantle - solid silicate
+            lowerMantle: {
+                name: 'Lower Mantle (Bridgmanite)',
+                kappa: 0.75,        // High resistance
+                tau: 1e14,          // ~3 million years
+                sigma: 0.85,        // High accumulation
+                lambda: 0.30,       // Low transmission (viscous)
+                thermal: 'hot',
+                mechanism: 'creep',
+                color: '#D2691E',
+                description: 'Dense silicate - slow creep, major stress storage'
+            },
+
+            // Upper mantle - olivine-rich
+            upperMantle: {
+                name: 'Upper Mantle (Olivine)',
+                kappa: 0.55,        // Moderate resistance
+                tau: 1e12,          // ~30,000 years
+                sigma: 0.70,        // Good accumulation
+                lambda: 0.45,       // Moderate transmission
+                thermal: 'warm',
+                mechanism: 'dislocation-creep',
+                color: '#CD853F',
+                description: 'Olivine matrix - dislocation creep dominant'
+            },
+
+            // Lithosphere - cold, rigid
+            lithosphere: {
+                name: 'Lithosphere (Rigid Shell)',
+                kappa: 0.90,        // High resistance (brittle)
+                tau: 1e16,          // ~300 million years
+                sigma: 0.95,        // Maximum accumulation
+                lambda: 0.20,       // Poor transmission (stored not passed)
+                thermal: 'cold',
+                mechanism: 'brittle-elastic',
+                color: '#8B4513',
+                description: 'Cold rigid shell - maximum stress storage, releases as earthquakes'
+            },
+
+            // =====================================================
+            // ANOMALOUS STRUCTURE MODIFIERS
+            // =====================================================
+
+            // LLSVPs - Large Low Shear Velocity Provinces
+            llsvp: {
+                name: 'LLSVP (Thermochemical Pile)',
+                kappa: 0.35,        // Reduced resistance (warmer/compositional)
+                tau: 1e10,          // ~300 years
+                sigma: 0.25,        // Low accumulation
+                lambda: 0.80,       // High transmission (channeling)
+                thermal: 'hot',
+                mechanism: 'channeling',
+                color: '#9b59b6',
+                description: 'Routes stress around/through - channeling effect'
+            },
+
+            // Subducted slabs - cold, dense
+            slab: {
+                name: 'Subducted Slab (Cold Oceanic)',
+                kappa: 0.88,        // Very high resistance (cold)
+                tau: 1e15,          // ~30 million years
+                sigma: 0.92,        // Very high accumulation
+                lambda: 0.15,       // Very low transmission
+                thermal: 'cold',
+                mechanism: 'brittle-storage',
+                color: '#3498db',
+                description: 'Cold dense slab - extreme stress storage, delayed release'
+            },
+
+            // Mantle plumes - hot upwelling
+            plume: {
+                name: 'Mantle Plume (Hot Upwelling)',
+                kappa: 0.20,        // Low resistance (hot, buoyant)
+                tau: 1e6,           // ~11 days
+                sigma: 0.15,        // Low accumulation
+                lambda: 0.90,       // High transmission (pathway)
+                thermal: 'very-hot',
+                mechanism: 'advective',
+                color: '#e74c3c',
+                description: 'Hot conduit - rapid upward stress/heat pathway'
+            },
+
+            // ULVZs - Ultra Low Velocity Zones (partial melt)
+            ulvz: {
+                name: 'ULVZ (Partial Melt Zone)',
+                kappa: 0.15,        // Very low (partial melt)
+                tau: 1e4,           // ~hours
+                sigma: 0.40,        // Moderate (puddles collect stress)
+                lambda: 0.70,       // Good transmission
+                thermal: 'very-hot',
+                mechanism: 'viscoelastic',
+                color: '#e67e22',
+                description: 'Partial melt puddles - stress concentrators, weak zones'
+            },
+
+            // Volcanic/magma-rich regions
+            volcanic: {
+                name: 'Volcanic Region (Magma-Rich)',
+                kappa: 0.18,        // Low resistance
+                tau: 1e5,           // ~1 day
+                sigma: 0.30,        // Some puddle accumulation
+                lambda: 0.82,       // Good transmission
+                thermal: 'hot',
+                mechanism: 'fluid-assisted',
+                color: '#e74c3c',
+                description: 'Rapid response, short timing signatures'
+            }
+        };
+
+        // =====================================================
+        // PATH-DEPENDENT DRAG CALCULATION
+        // =====================================================
+
+        function calculatePathDrag(startDepth, endDepth, azimuth, region) {
+            // Calculate total drag along a stress path through the Earth
+            // Returns: effective drag coefficient, timing signature, accumulation
+
+            const layers = getLayersInPath(startDepth, endDepth);
+            const anomalies = getAnomaliesInPath(azimuth, region);
+
+            let totalKappa = 0;
+            let weightedTau = 0;
+            let totalSigma = 0;
+            let effectiveLambda = 1.0;
+            let thermalSignature = 0;
+            let pathDistance = 0;
+
+            layers.forEach(layer => {
+                const constants = DRAG_SCALE_CONSTANTS[layer.type];
+                const layerThickness = layer.thickness;
+                pathDistance += layerThickness;
+
+                // Weighted averages based on path length through each layer
+                totalKappa += constants.kappa * layerThickness;
+                weightedTau += Math.log10(constants.tau) * layerThickness;
+                totalSigma += constants.sigma * layerThickness;
+
+                // Lambda is multiplicative (transmission chain)
+                effectiveLambda *= Math.pow(constants.lambda, layerThickness / 1000);
+
+                // Thermal signature contribution
+                const thermalWeight = constants.thermal === 'very-hot' ? 1.0 :
+                                      constants.thermal === 'hot' ? 0.7 :
+                                      constants.thermal === 'warm' ? 0.4 :
+                                      constants.thermal === 'gradient' ? 0.5 :
+                                      0.1; // cold
+                thermalSignature += thermalWeight * layerThickness;
+            });
+
+            // Normalize by path distance
+            if (pathDistance > 0) {
+                totalKappa /= pathDistance;
+                weightedTau /= pathDistance;
+                totalSigma /= pathDistance;
+                thermalSignature /= pathDistance;
+            }
+
+            // Apply anomaly modifiers
+            anomalies.forEach(anomaly => {
+                const mod = DRAG_SCALE_CONSTANTS[anomaly.type];
+                const influence = anomaly.influence || 0.3;
+
+                totalKappa = totalKappa * (1 - influence) + mod.kappa * influence;
+                totalSigma = totalSigma * (1 - influence) + mod.sigma * influence;
+                effectiveLambda *= (1 - influence) + mod.lambda * influence;
+            });
+
+            // Calculate timing signature
+            // Volcanic regions: shorter timing (hours to days)
+            // Cold slab regions: longer timing (weeks to months)
+            const effectiveTau = Math.pow(10, weightedTau);
+            const timingSignature = thermalSignature > 0.6 ? 'rapid' :
+                                   thermalSignature > 0.4 ? 'moderate' :
+                                   'delayed';
+
+            return {
+                kappa: totalKappa,
+                tau: effectiveTau,
+                sigma: totalSigma,
+                lambda: effectiveLambda,
+                thermalSignature: thermalSignature,
+                timingSignature: timingSignature,
+                pathDistance: pathDistance,
+                expectedDelay: getExpectedDelay(effectiveTau, thermalSignature)
+            };
+        }
+
+        function getLayersInPath(startDepth, endDepth) {
+            // Define layer boundaries (km from surface)
+            const boundaries = {
+                lithosphere: { top: 0, bottom: 100, type: 'lithosphere' },
+                upperMantle: { top: 100, bottom: 410, type: 'upperMantle' },
+                transitionZone: { top: 410, bottom: 660, type: 'upperMantle' },
+                lowerMantle: { top: 660, bottom: 2700, type: 'lowerMantle' },
+                dLayer: { top: 2700, bottom: 2890, type: 'dLayer' },
+                outerCore: { top: 2890, bottom: 5150, type: 'outerCore' },
+                innerCore: { top: 5150, bottom: 6371, type: 'innerCore' }
+            };
+
+            const path = [];
+            const minD = Math.min(startDepth, endDepth);
+            const maxD = Math.max(startDepth, endDepth);
+
+            for (const [name, layer] of Object.entries(boundaries)) {
+                if (layer.bottom > minD && layer.top < maxD) {
+                    const effectiveTop = Math.max(layer.top, minD);
+                    const effectiveBottom = Math.min(layer.bottom, maxD);
+                    path.push({
+                        name: name,
+                        type: layer.type,
+                        thickness: effectiveBottom - effectiveTop
+                    });
+                }
+            }
+
+            return path;
+        }
+
+        function getAnomaliesInPath(azimuth, region) {
+            // Check what anomalous structures are in the path
+            const anomalies = [];
+
+            // Check LLSVPs (Africa: 0-60°E, Pacific: 160°W-160°E)
+            if (azimuth >= -20 && azimuth <= 60) {
+                anomalies.push({ type: 'llsvp', name: 'African LLSVP', influence: 0.4 });
+            } else if (azimuth >= 160 || azimuth <= -160) {
+                anomalies.push({ type: 'llsvp', name: 'Pacific LLSVP', influence: 0.5 });
+            }
+
+            // Check for volcanic regions (Hawaii, Iceland, etc.)
+            const volcanicRegions = [
+                { name: 'Hawaii', lat: 19.5, lon: -155.5 },
+                { name: 'Iceland', lat: 64.5, lon: -18 },
+                { name: 'Yellowstone', lat: 44.4, lon: -110.6 },
+                { name: 'Japan', lat: 35.7, lon: 139.7 }
+            ];
+
+            if (region) {
+                volcanicRegions.forEach(v => {
+                    if (isNearRegion(region, v.lat, v.lon, 15)) {
+                        anomalies.push({ type: 'volcanic', name: v.name, influence: 0.35 });
+                    }
+                });
+            }
+
+            // Check for cold slab regions
+            const slabRegions = [
+                { name: 'Farallon', lat: 35, lon: -100 },
+                { name: 'Tethyan', lat: 30, lon: 80 },
+                { name: 'Pacific Slab', lat: 40, lon: 140 }
+            ];
+
+            if (region) {
+                slabRegions.forEach(s => {
+                    if (isNearRegion(region, s.lat, s.lon, 20)) {
+                        anomalies.push({ type: 'slab', name: s.name, influence: 0.4 });
+                    }
+                });
+            }
+
+            return anomalies;
+        }
+
+        function isNearRegion(region, lat, lon, tolerance) {
+            // Simplified region check
+            const regionCoords = {
+                'Japan': { lat: 35.7, lon: 139.7 },
+                'Indonesia': { lat: -2.5, lon: 118 },
+                'South America': { lat: -20, lon: -70 },
+                'Alaska': { lat: 61, lon: -150 },
+                'California': { lat: 36, lon: -120 },
+                'Mediterranean': { lat: 38, lon: 15 },
+                'Philippines': { lat: 12.9, lon: 122 },
+                'New Zealand': { lat: -41, lon: 174 }
+            };
+
+            const rc = regionCoords[region];
+            if (!rc) return false;
+
+            const dlat = Math.abs(rc.lat - lat);
+            const dlon = Math.abs(rc.lon - lon);
+            return dlat < tolerance && dlon < tolerance;
+        }
+
+        function getExpectedDelay(tau, thermalSignature) {
+            // Convert relaxation time to expected earthquake triggering delay
+            // Hot paths: faster response
+            // Cold paths: delayed response
+
+            const baseDelay = Math.log10(tau);
+            const thermalFactor = 1.0 - thermalSignature * 0.5; // Hot reduces delay
+
+            const adjustedDelay = baseDelay * thermalFactor;
+
+            if (adjustedDelay < 4) return 'hours';
+            if (adjustedDelay < 6) return 'days';
+            if (adjustedDelay < 8) return 'weeks';
+            if (adjustedDelay < 10) return 'months';
+            return 'years';
+        }
+
+        // =====================================================
+        // REGIONAL TIMING SIGNATURES
+        // =====================================================
+
+        function getRegionalTimingSignature(region) {
+            // Different regions have different timing signatures based on
+            // what the stress vector passes through
+
+            const pathDrag = calculatePathDrag(0, 2890, getRegionAzimuth(region), region);
+
+            return {
+                region: region,
+                ...pathDrag,
+                signature: pathDrag.timingSignature,
+                expectedWindow: pathDrag.expectedDelay,
+                recommendation: getTimingRecommendation(pathDrag)
+            };
+        }
+
+        function getRegionAzimuth(region) {
+            const azimuths = {
+                'Japan': 140,
+                'Indonesia': 118,
+                'South America': -70,
+                'Alaska': -150,
+                'California': -120,
+                'Mediterranean': 15,
+                'Philippines': 122,
+                'New Zealand': 174
+            };
+            return azimuths[region] || 0;
+        }
+
+        function getTimingRecommendation(pathDrag) {
+            if (pathDrag.thermalSignature > 0.6) {
+                return 'Volcanic path - expect rapid response (6-48 hours after trigger alignment)';
+            } else if (pathDrag.sigma > 0.8) {
+                return 'Cold slab path - expect delayed response (1-4 weeks after trigger alignment)';
+            } else if (pathDrag.lambda > 0.7) {
+                return 'Channeled path (LLSVP) - enhanced transmission, moderate timing';
+            } else {
+                return 'Standard mantle path - typical response window';
+            }
+        }
+
+        const canvas = document.getElementById('interiorCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // State
+        let viewMode = 'cross-section';
+        let rotation = 0;
+        let animationFrame = null;
+        let layers = {
+            lithosphere: true,
+            'upper-mantle': true,
+            'lower-mantle': true,
+            'd-layer': true,
+            'outer-core': true,
+            'inner-core': true,
+            llsvps: true,
+            slabs: true,
+            plumes: true,
+            conduits: true,
+            chambers: true,
+            ulvzs: true
+        };
+
+        // Earth structure data (radii in km, scaled to canvas)
+        const EARTH = {
+            radius: 6371,
+            innerCore: 1220,
+            outerCore: 3480,
+            lowerMantle: 5701,
+            upperMantle: 5961,
+            lithosphere: 6371
+        };
+
+        // Structures - Enhanced with detailed magma systems
+        const STRUCTURES = {
+            llsvps: [
+                { name: 'African LLSVP', angle: 20, span: 80, depth: 2900 },
+                { name: 'Pacific LLSVP', angle: 200, span: 100, depth: 2900 }
+            ],
+            slabs: [
+                { name: 'Farallon', angle: 260, depth: 2500 },
+                { name: 'Tethyan', angle: 80, depth: 2200 },
+                { name: 'Pacific', angle: 140, depth: 2600 }
+            ],
+            // Enhanced plume/hotspot data with magma chamber details
+            plumes: [
+                {
+                    name: 'Hawaii',
+                    angle: 205,
+                    strength: 0.8,
+                    plumeWidth: 150,        // km width at base
+                    chamberDepth: 50,       // km below surface
+                    chamberWidth: 80,       // km
+                    magmaTemp: 1500,        // °C
+                    type: 'oceanic-hotspot'
+                },
+                {
+                    name: 'Yellowstone',
+                    angle: 250,
+                    strength: 0.75,
+                    plumeWidth: 200,
+                    chamberDepth: 8,        // Upper chamber very shallow
+                    chamberWidth: 60,
+                    lowerChamberDepth: 45,  // Lower chamber
+                    lowerChamberWidth: 100,
+                    magmaTemp: 1450,
+                    type: 'supervolcano'
+                },
+                {
+                    name: 'Iceland',
+                    angle: 340,
+                    strength: 0.7,
+                    plumeWidth: 180,
+                    chamberDepth: 20,
+                    chamberWidth: 50,
+                    magmaTemp: 1400,
+                    type: 'ridge-hotspot'
+                },
+                {
+                    name: 'Afar',
+                    angle: 42,
+                    strength: 0.65,
+                    plumeWidth: 160,
+                    chamberDepth: 15,
+                    chamberWidth: 40,
+                    magmaTemp: 1350,
+                    type: 'rift-hotspot'
+                },
+                {
+                    name: 'Reunion',
+                    angle: 55,
+                    strength: 0.6,
+                    plumeWidth: 120,
+                    chamberDepth: 30,
+                    chamberWidth: 35,
+                    magmaTemp: 1400,
+                    type: 'oceanic-hotspot'
+                },
+                {
+                    name: 'Galapagos',
+                    angle: 275,
+                    strength: 0.55,
+                    plumeWidth: 130,
+                    chamberDepth: 40,
+                    chamberWidth: 45,
+                    magmaTemp: 1380,
+                    type: 'oceanic-hotspot'
+                }
+            ],
+            ulvzs: [
+                { angle: 350, radius: 300, name: 'Iceland Root' },
+                { angle: 205, radius: 400, name: 'Hawaii Root' },
+                { angle: 250, radius: 350, name: 'Yellowstone Root' },
+                { angle: 42, radius: 280, name: 'Afar Root' }
+            ],
+            // Magma conduit connections from CMB to surface
+            magmaConduits: [
+                {
+                    name: 'Yellowstone System',
+                    sourceAngle: 250,
+                    surfaceAngle: 250,
+                    plumeOriginDepth: 2890,  // CMB
+                    segments: [
+                        { depth: 2890, width: 200, temp: 1600 },  // Root at CMB
+                        { depth: 2000, width: 150, temp: 1550 },  // Mid-lower mantle
+                        { depth: 1000, width: 120, temp: 1500 },  // Mid-mantle
+                        { depth: 410, width: 100, temp: 1480 },   // Transition zone
+                        { depth: 200, width: 80, temp: 1450 },    // Upper mantle
+                        { depth: 45, width: 100, temp: 1400 },    // Lower chamber
+                        { depth: 8, width: 60, temp: 1350 }       // Upper chamber (Caldera)
+                    ]
+                },
+                {
+                    name: 'Hawaii System',
+                    sourceAngle: 205,
+                    surfaceAngle: 205,
+                    plumeOriginDepth: 2890,
+                    segments: [
+                        { depth: 2890, width: 180, temp: 1600 },
+                        { depth: 2000, width: 140, temp: 1550 },
+                        { depth: 1000, width: 110, temp: 1520 },
+                        { depth: 410, width: 90, temp: 1500 },
+                        { depth: 150, width: 70, temp: 1480 },
+                        { depth: 50, width: 80, temp: 1450 }      // Kilauea chamber
+                    ]
+                },
+                {
+                    name: 'Iceland System',
+                    sourceAngle: 340,
+                    surfaceAngle: 340,
+                    plumeOriginDepth: 2890,
+                    segments: [
+                        { depth: 2890, width: 200, temp: 1580 },
+                        { depth: 2000, width: 160, temp: 1520 },
+                        { depth: 1000, width: 130, temp: 1480 },
+                        { depth: 410, width: 100, temp: 1450 },
+                        { depth: 100, width: 80, temp: 1400 },
+                        { depth: 20, width: 50, temp: 1350 }
+                    ]
+                }
+            ]
+        };
+
+        // Drag flow particles
+        let particles = [];
+
+        function initCanvas() {
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            setupControls();
+            animate();
+        }
+
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth * 2;
+            canvas.height = container.clientHeight * 2;
+            ctx.scale(2, 2);
+        }
+
+        function setupControls() {
+            // View mode buttons
+            document.querySelectorAll('.viz-mode-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.viz-mode-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    viewMode = btn.dataset.mode;
+                    if (viewMode === 'drag-flow') {
+                        initParticles();
+                    }
+                });
+            });
+
+            // Layer toggles
+            document.querySelectorAll('[data-layer]').forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    layers[checkbox.dataset.layer] = checkbox.checked;
+                });
+            });
+        }
+
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < 100; i++) {
+                particles.push({
+                    angle: Math.random() * Math.PI * 2,
+                    radius: EARTH.outerCore + Math.random() * (EARTH.lowerMantle - EARTH.outerCore),
+                    speed: 0.001 + Math.random() * 0.002,
+                    size: 2 + Math.random() * 2
+                });
+            }
+        }
+
+        function animate() {
+            const w = canvas.width / 2;
+            const h = canvas.height / 2;
+
+            ctx.fillStyle = '#0a0a1a';
+            ctx.fillRect(0, 0, w, h);
+
+            const centerX = w / 2;
+            const centerY = h / 2;
+            const scale = Math.min(w, h) * 0.4 / EARTH.radius;
+
+            rotation += 0.002;
+
+            switch (viewMode) {
+                case 'cross-section':
+                    drawCrossSection(centerX, centerY, scale);
+                    break;
+                case 'global':
+                    drawGlobalView(centerX, centerY, scale);
+                    break;
+                case 'cmb':
+                    drawCMBDetail(centerX, centerY, scale * 1.5);
+                    break;
+                case 'drag-flow':
+                    drawDragFlow(centerX, centerY, scale);
+                    break;
+            }
+
+            animationFrame = requestAnimationFrame(animate);
+        }
+
+        function drawCrossSection(cx, cy, scale) {
+            // Draw layers from outside in
+            if (layers['lithosphere']) {
+                drawLayer(cx, cy, EARTH.lithosphere * scale, '#8B4513', 'Lithosphere');
+            }
+            if (layers['upper-mantle']) {
+                drawLayer(cx, cy, EARTH.upperMantle * scale, '#CD853F', 'Upper Mantle');
+            }
+            if (layers['lower-mantle']) {
+                drawLayer(cx, cy, EARTH.lowerMantle * scale, '#D2691E', 'Lower Mantle');
+            }
+            if (layers['d-layer']) {
+                drawDLayer(cx, cy, scale);
+            }
+            if (layers['outer-core']) {
+                drawLayer(cx, cy, EARTH.outerCore * scale, '#FF6600', 'Outer Core', true);
+            }
+            if (layers['inner-core']) {
+                drawLayer(cx, cy, EARTH.innerCore * scale, '#F4D03F', 'Inner Core');
+                drawCoreGlow(cx, cy, EARTH.innerCore * scale);
+            }
+
+            // Draw anomalous structures
+            if (layers.llsvps) drawLLSVPs(cx, cy, scale);
+            if (layers.slabs) drawSlabs(cx, cy, scale);
+            if (layers.ulvzs) drawULVZs(cx, cy, scale);
+
+            // Always draw magma conduits and plumes - fundamental structure
+            drawPlumes(cx, cy, scale);
+
+            // Labels
+            drawDepthLabels(cx, cy, scale);
+        }
+
+        function drawLayer(cx, cy, radius, color, name, isLiquid = false) {
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+
+            if (isLiquid) {
+                // Animated liquid effect
+                const gradient = ctx.createRadialGradient(cx, cy, radius * 0.7, cx, cy, radius);
+                gradient.addColorStop(0, color);
+                gradient.addColorStop(0.5, shadeColor(color, -20));
+                gradient.addColorStop(1, shadeColor(color, -40));
+                ctx.fillStyle = gradient;
+
+                // Add flow lines
+                ctx.fill();
+                ctx.save();
+                ctx.clip();
+                ctx.strokeStyle = 'rgba(255, 150, 50, 0.3)';
+                ctx.lineWidth = 1;
+                for (let i = 0; i < 8; i++) {
+                    const angle = rotation * 2 + i * Math.PI / 4;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, radius * 0.8, angle, angle + 0.5);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            } else {
+                ctx.fillStyle = color;
+                ctx.fill();
+            }
+
+            ctx.strokeStyle = shadeColor(color, -30);
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+
+        function drawDLayer(cx, cy, scale) {
+            const innerR = EARTH.outerCore * scale;
+            const outerR = (EARTH.outerCore + 200) * scale;
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
+            ctx.arc(cx, cy, innerR, Math.PI * 2, 0, true);
+            ctx.closePath();
+
+            const gradient = ctx.createRadialGradient(cx, cy, innerR, cx, cy, outerR);
+            gradient.addColorStop(0, '#FF6600');
+            gradient.addColorStop(1, '#D2691E');
+            ctx.fillStyle = gradient;
+            ctx.fill();
+        }
+
+        function drawCoreGlow(cx, cy, radius) {
+            const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius * 1.5);
+            gradient.addColorStop(0, 'rgba(244, 208, 63, 0.6)');
+            gradient.addColorStop(0.5, 'rgba(244, 208, 63, 0.2)');
+            gradient.addColorStop(1, 'rgba(244, 208, 63, 0)');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius * 1.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawLLSVPs(cx, cy, scale) {
+            STRUCTURES.llsvps.forEach(llsvp => {
+                const innerR = EARTH.outerCore * scale;
+                const outerR = (EARTH.outerCore + 500) * scale;
+                const startAngle = (llsvp.angle - llsvp.span / 2) * Math.PI / 180 + rotation;
+                const endAngle = (llsvp.angle + llsvp.span / 2) * Math.PI / 180 + rotation;
+
+                ctx.beginPath();
+                ctx.arc(cx, cy, outerR, startAngle, endAngle);
+                ctx.arc(cx, cy, innerR, endAngle, startAngle, true);
+                ctx.closePath();
+
+                const gradient = ctx.createRadialGradient(cx, cy, innerR, cx, cy, outerR);
+                gradient.addColorStop(0, 'rgba(155, 89, 182, 0.8)');
+                gradient.addColorStop(1, 'rgba(142, 68, 173, 0.4)');
+                ctx.fillStyle = gradient;
+                ctx.fill();
+
+                ctx.strokeStyle = '#9b59b6';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            });
+        }
+
+        function drawSlabs(cx, cy, scale) {
+            STRUCTURES.slabs.forEach(slab => {
+                const angle = slab.angle * Math.PI / 180 + rotation;
+                const startR = EARTH.upperMantle * scale;
+                const endR = (EARTH.radius - slab.depth) * scale;
+
+                ctx.strokeStyle = '#3498db';
+                ctx.lineWidth = 8;
+                ctx.lineCap = 'round';
+
+                ctx.beginPath();
+                ctx.moveTo(
+                    cx + Math.cos(angle) * startR,
+                    cy + Math.sin(angle) * startR
+                );
+
+                // Curved path to depth
+                const midR = (startR + endR) / 2;
+                const ctrlAngle = angle + 0.2;
+                ctx.quadraticCurveTo(
+                    cx + Math.cos(ctrlAngle) * midR,
+                    cy + Math.sin(ctrlAngle) * midR,
+                    cx + Math.cos(angle + 0.1) * endR,
+                    cy + Math.sin(angle + 0.1) * endR
+                );
+                ctx.stroke();
+
+                // Slab tip
+                ctx.fillStyle = '#2980b9';
+                ctx.beginPath();
+                ctx.arc(
+                    cx + Math.cos(angle + 0.1) * endR,
+                    cy + Math.sin(angle + 0.1) * endR,
+                    6, 0, Math.PI * 2
+                );
+                ctx.fill();
+            });
+        }
+
+        function drawPlumes(cx, cy, scale) {
+            // Always draw magma conduit systems - they are fundamental structure
+            // Draw simple bright lines from outer core to surface for each conduit
+            STRUCTURES.magmaConduits.forEach(conduit => {
+                const angle = conduit.sourceAngle * Math.PI / 180;
+                const innerR = EARTH.outerCore * scale;  // Start at outer core boundary
+                const outerR = EARTH.lithosphere * scale;  // End at surface
+
+                // Bright orange line
+                ctx.save();
+                ctx.strokeStyle = '#ff6600';
+                ctx.lineWidth = 4;
+                ctx.shadowColor = '#ff6600';
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.moveTo(cx + Math.cos(angle + rotation) * innerR, cy + Math.sin(angle + rotation) * innerR);
+                ctx.lineTo(cx + Math.cos(angle + rotation) * outerR, cy + Math.sin(angle + rotation) * outerR);
+                ctx.stroke();
+                ctx.restore();
+
+                // Label
+                const midR = (innerR + outerR) / 2;
+                ctx.fillStyle = '#ffaa00';
+                ctx.font = 'bold 11px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(conduit.name, cx + Math.cos(angle + rotation) * midR + 20, cy + Math.sin(angle + rotation) * midR);
+            });
+
+            // Then draw plume labels and surface features
+            STRUCTURES.plumes.forEach(plume => {
+                const angle = plume.angle * Math.PI / 180 + rotation;
+                const surfaceR = EARTH.lithosphere * scale;
+
+                // Surface hotspot marker
+                const hotspotX = cx + Math.cos(angle) * surfaceR;
+                const hotspotY = cy + Math.sin(angle) * surfaceR;
+
+                // Glowing hotspot effect - larger and more visible
+                const glowSize = 12 + Math.sin(rotation * 8) * 3;
+                const glow = ctx.createRadialGradient(hotspotX, hotspotY, 0, hotspotX, hotspotY, glowSize * 2.5);
+                glow.addColorStop(0, 'rgba(255, 255, 200, 1)');
+                glow.addColorStop(0.2, 'rgba(255, 150, 50, 0.9)');
+                glow.addColorStop(0.5, 'rgba(255, 50, 0, 0.6)');
+                glow.addColorStop(1, 'rgba(200, 0, 0, 0)');
+                ctx.fillStyle = glow;
+                ctx.beginPath();
+                ctx.arc(hotspotX, hotspotY, glowSize * 2.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Center point - bright white/yellow
+                ctx.fillStyle = '#ffffcc';
+                ctx.beginPath();
+                ctx.arc(hotspotX, hotspotY, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#ff6600';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Label
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 10px sans-serif';
+                ctx.textAlign = 'center';
+                const labelOffset = 18;
+                ctx.fillText(plume.name, hotspotX, hotspotY - labelOffset);
+
+                // Type indicator
+                ctx.font = '8px sans-serif';
+                ctx.fillStyle = '#aaa';
+                const typeLabel = plume.type === 'supervolcano' ? 'SUPERVOLCANO' :
+                                  plume.type === 'ridge-hotspot' ? 'Ridge Hotspot' :
+                                  plume.type === 'rift-hotspot' ? 'Rift Hotspot' : 'Hotspot';
+                ctx.fillText(typeLabel, hotspotX, hotspotY - labelOffset + 10);
+
+                // Always draw magma chamber if detailed plume data exists
+                if (plume.chamberDepth) {
+                    drawMagmaChamber(cx, cy, scale, plume);
+                }
+            });
+        }
+
+        function drawMagmaConduit(cx, cy, scale, conduit) {
+            const angle = conduit.sourceAngle * Math.PI / 180 + rotation;
+            const segments = conduit.segments;
+
+            // Calculate radii - from CMB to near surface
+            const startR = (EARTH.radius - segments[0].depth) * scale;  // CMB ~3481 km from center
+            const endR = (EARTH.radius - segments[segments.length - 1].depth) * scale;  // Near surface
+
+            // Draw outer glow first (widest)
+            ctx.strokeStyle = 'rgba(255, 100, 0, 0.3)';
+            ctx.lineWidth = 12;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(cx + Math.cos(angle) * startR, cy + Math.sin(angle) * startR);
+            ctx.lineTo(cx + Math.cos(angle) * endR, cy + Math.sin(angle) * endR);
+            ctx.stroke();
+
+            // Draw middle glow
+            ctx.strokeStyle = 'rgba(255, 150, 50, 0.6)';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(cx + Math.cos(angle) * startR, cy + Math.sin(angle) * startR);
+            ctx.lineTo(cx + Math.cos(angle) * endR, cy + Math.sin(angle) * endR);
+            ctx.stroke();
+
+            // Draw bright center line (always visible)
+            ctx.strokeStyle = '#ff8800';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(cx + Math.cos(angle) * startR, cy + Math.sin(angle) * startR);
+            ctx.lineTo(cx + Math.cos(angle) * endR, cy + Math.sin(angle) * endR);
+            ctx.stroke();
+
+            // Draw root connection at CMB - pulsing glow
+            const rootR = (EARTH.radius - conduit.plumeOriginDepth) * scale;
+            const pulse = 1 + Math.sin(rotation * 5) * 0.3;
+            const rootSize = 20 * pulse;
+
+            const rootGlow = ctx.createRadialGradient(
+                cx + Math.cos(angle) * rootR, cy + Math.sin(angle) * rootR, 0,
+                cx + Math.cos(angle) * rootR, cy + Math.sin(angle) * rootR, rootSize
+            );
+            rootGlow.addColorStop(0, 'rgba(255, 200, 100, 0.9)');
+            rootGlow.addColorStop(0.4, 'rgba(255, 150, 50, 0.6)');
+            rootGlow.addColorStop(1, 'rgba(255, 50, 0, 0)');
+
+            ctx.fillStyle = rootGlow;
+            ctx.beginPath();
+            ctx.arc(
+                cx + Math.cos(angle) * rootR,
+                cy + Math.sin(angle) * rootR,
+                rootSize, 0, Math.PI * 2
+            );
+            ctx.fill();
+
+            // Bright center point at root
+            ctx.fillStyle = '#ffcc00';
+            ctx.beginPath();
+            ctx.arc(
+                cx + Math.cos(angle) * rootR,
+                cy + Math.sin(angle) * rootR,
+                4, 0, Math.PI * 2
+            );
+            ctx.fill();
+
+            // Label at mid-mantle
+            const labelR = (EARTH.radius - 1500) * scale;
+            ctx.fillStyle = '#ffcc99';
+            ctx.font = 'bold 10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(
+                conduit.name,
+                cx + Math.cos(angle) * labelR,
+                cy + Math.sin(angle) * labelR
+            );
+        }
+
+        function drawMagmaChamber(cx, cy, scale, plume) {
+            const angle = plume.angle * Math.PI / 180 + rotation;
+
+            // Upper magma chamber
+            const chamberR = (EARTH.radius - plume.chamberDepth) * scale;
+            const chamberSize = 15 + plume.chamberWidth * 0.15;  // More visible size
+
+            // Chamber glow
+            const chamberX = cx + Math.cos(angle) * chamberR;
+            const chamberY = cy + Math.sin(angle) * chamberR;
+
+            // Pulsing effect for active magma
+            const pulse = 1 + Math.sin(rotation * 6 + plume.angle) * 0.15;
+
+            const chamberGlow = ctx.createRadialGradient(
+                chamberX, chamberY, 0,
+                chamberX, chamberY, chamberSize * pulse
+            );
+            chamberGlow.addColorStop(0, 'rgba(255, 200, 100, 0.9)');
+            chamberGlow.addColorStop(0.4, 'rgba(255, 120, 50, 0.7)');
+            chamberGlow.addColorStop(0.7, 'rgba(200, 50, 0, 0.4)');
+            chamberGlow.addColorStop(1, 'rgba(150, 0, 0, 0)');
+
+            ctx.fillStyle = chamberGlow;
+            ctx.beginPath();
+            // Elliptical chamber shape
+            ctx.ellipse(chamberX, chamberY, chamberSize * pulse, chamberSize * 0.6 * pulse, angle, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Lower chamber for supervolcanoes (like Yellowstone)
+            if (plume.lowerChamberDepth) {
+                const lowerR = (EARTH.radius - plume.lowerChamberDepth) * scale;
+                const lowerSize = 20 + plume.lowerChamberWidth * 0.15;  // More visible size
+                const lowerX = cx + Math.cos(angle) * lowerR;
+                const lowerY = cy + Math.sin(angle) * lowerR;
+
+                const lowerGlow = ctx.createRadialGradient(
+                    lowerX, lowerY, 0,
+                    lowerX, lowerY, lowerSize * pulse
+                );
+                lowerGlow.addColorStop(0, 'rgba(255, 180, 80, 0.85)');
+                lowerGlow.addColorStop(0.5, 'rgba(255, 100, 30, 0.6)');
+                lowerGlow.addColorStop(1, 'rgba(180, 30, 0, 0)');
+
+                ctx.fillStyle = lowerGlow;
+                ctx.beginPath();
+                ctx.ellipse(lowerX, lowerY, lowerSize * pulse, lowerSize * 0.5 * pulse, angle, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Connection between chambers
+                ctx.strokeStyle = 'rgba(255, 150, 50, 0.6)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(chamberX, chamberY);
+                ctx.lineTo(lowerX, lowerY);
+                ctx.stroke();
+
+                // Label lower chamber
+                ctx.fillStyle = 'rgba(255, 200, 150, 0.8)';
+                ctx.font = '8px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('Lower Chamber', lowerX + 30, lowerY);
+            }
+
+            // Temperature label
+            if (plume.magmaTemp) {
+                ctx.fillStyle = 'rgba(255, 200, 150, 0.7)';
+                ctx.font = '7px sans-serif';
+                ctx.fillText(`${plume.magmaTemp}°C`, chamberX + chamberSize + 5, chamberY);
+            }
+        }
+
+        function drawULVZs(cx, cy, scale) {
+            STRUCTURES.ulvzs.forEach(ulvz => {
+                const angle = ulvz.angle * Math.PI / 180 + rotation;
+                const r = EARTH.outerCore * scale + 10;
+                const size = ulvz.radius * scale * 0.05;
+
+                const x = cx + Math.cos(angle) * r;
+                const y = cy + Math.sin(angle) * r;
+
+                // Glowing melt pocket
+                const gradient = ctx.createRadialGradient(x, y, 0, x, y, size);
+                gradient.addColorStop(0, 'rgba(230, 126, 34, 0.9)');
+                gradient.addColorStop(0.5, 'rgba(230, 126, 34, 0.5)');
+                gradient.addColorStop(1, 'rgba(230, 126, 34, 0)');
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Pulsing effect
+                const pulse = 1 + Math.sin(rotation * 10) * 0.2;
+                ctx.strokeStyle = '#e67e22';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(x, y, size * 0.6 * pulse, 0, Math.PI * 2);
+                ctx.stroke();
+            });
+        }
+
+        function drawDepthLabels(cx, cy, scale) {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'left';
+
+            const labels = [
+                { depth: 0, name: 'Surface' },
+                { depth: 35, name: 'Moho' },
+                { depth: 410, name: '410 km' },
+                { depth: 660, name: '660 km' },
+                { depth: 2890, name: 'CMB' },
+                { depth: 5150, name: 'ICB' }
+            ];
+
+            labels.forEach(label => {
+                const r = (EARTH.radius - label.depth) * scale;
+                const x = cx + r + 5;
+                const y = cy;
+                ctx.fillText(label.name, x, y + 3);
+            });
+        }
+
+        function drawGlobalView(cx, cy, scale) {
+            // Similar to cross-section but 3D-ish perspective
+            drawCrossSection(cx, cy, scale * 0.8);
+
+            // Add surface features overlay
+            ctx.strokeStyle = 'rgba(78, 205, 196, 0.5)';
+            ctx.lineWidth = 1;
+
+            // Plate boundaries hint
+            for (let i = 0; i < 12; i++) {
+                const angle = i * Math.PI / 6 + rotation;
+                const r = EARTH.lithosphere * scale * 0.8;
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, angle - 0.1, angle + 0.1);
+                ctx.stroke();
+            }
+        }
+
+        function drawCMBDetail(cx, cy, scale) {
+            // Zoomed view of core-mantle boundary
+            const cmbR = EARTH.outerCore * scale * 0.5;
+
+            // D" layer detail
+            for (let i = 0; i < 360; i += 5) {
+                const angle = i * Math.PI / 180 + rotation;
+                const variation = Math.sin(i * 0.1) * 10 + Math.cos(i * 0.05) * 5;
+                const r = cmbR + variation;
+
+                ctx.fillStyle = i % 20 < 10 ? '#D2691E' : '#C0651C';
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.arc(cx, cy, r, angle, angle + 5 * Math.PI / 180);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // Core
+            drawLayer(cx, cy, cmbR * 0.9, '#FF6600', 'Outer Core', true);
+
+            // ULVZs prominent
+            if (layers.ulvzs) {
+                STRUCTURES.ulvzs.forEach(ulvz => {
+                    const angle = ulvz.angle * Math.PI / 180 + rotation;
+                    const x = cx + Math.cos(angle) * cmbR * 0.95;
+                    const y = cy + Math.sin(angle) * cmbR * 0.95;
+
+                    const gradient = ctx.createRadialGradient(x, y, 0, x, y, 30);
+                    gradient.addColorStop(0, '#e67e22');
+                    gradient.addColorStop(1, 'rgba(230, 126, 34, 0)');
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 30, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '10px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('ULVZ', x, y + 4);
+                });
+            }
+        }
+
+        function drawDragFlow(cx, cy, scale) {
+            // Background structure
+            drawCrossSection(cx, cy, scale);
+
+            // Animate particles based on material-specific drag constants
+            particles.forEach(p => {
+                // Determine which layer this particle is in (based on depth/radius)
+                const depth = EARTH.radius - p.radius;
+                const layerInfo = getLayerFromDepth(depth);
+                const layerConstants = DRAG_SCALE_CONSTANTS[layerInfo.type];
+
+                // Check if in LLSVP (channeling effect)
+                let inLLSVP = false;
+                let inSlab = false;
+                let inPlume = false;
+
+                STRUCTURES.llsvps.forEach(llsvp => {
+                    const llsvpStart = (llsvp.angle - llsvp.span / 2) * Math.PI / 180;
+                    const llsvpEnd = (llsvp.angle + llsvp.span / 2) * Math.PI / 180;
+                    const normalizedAngle = ((p.angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+                    if (normalizedAngle > llsvpStart && normalizedAngle < llsvpEnd) {
+                        inLLSVP = true;
+                    }
+                });
+
+                STRUCTURES.slabs.forEach(slab => {
+                    const slabAngle = slab.angle * Math.PI / 180;
+                    const normalizedAngle = ((p.angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+                    if (Math.abs(normalizedAngle - slabAngle) < 0.15) {
+                        inSlab = true;
+                    }
+                });
+
+                STRUCTURES.plumes.forEach(plume => {
+                    const plumeAngle = plume.angle * Math.PI / 180;
+                    const normalizedAngle = ((p.angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+                    if (Math.abs(normalizedAngle - plumeAngle) < 0.1) {
+                        inPlume = true;
+                    }
+                });
+
+                // Calculate speed based on layer's transmission (lambda) and drag (kappa)
+                // Higher lambda = faster transmission, lower kappa = less resistance
+                let baseSpeed;
+                if (layerConstants) {
+                    // Speed inversely proportional to kappa, directly proportional to lambda
+                    baseSpeed = 0.003 * layerConstants.lambda * (1 - layerConstants.kappa * 0.8);
+                } else {
+                    baseSpeed = 0.001;
+                }
+
+                // Apply anomaly modifiers
+                if (inLLSVP) {
+                    // LLSVP: channeling effect - moderate speed with specific direction
+                    baseSpeed *= DRAG_SCALE_CONSTANTS.llsvp.lambda;
+                } else if (inSlab) {
+                    // Cold slab: high drag, slow movement
+                    baseSpeed *= (1 - DRAG_SCALE_CONSTANTS.slab.kappa) * 0.5;
+                } else if (inPlume) {
+                    // Hot plume: rapid upward flow
+                    baseSpeed *= DRAG_SCALE_CONSTANTS.plume.lambda * 1.5;
+                    // Plumes have radial movement (outward)
+                    p.radius = Math.min(p.radius + 2, EARTH.lithosphere);
+                }
+
+                p.speed = baseSpeed + (Math.random() * 0.0005);
+
+                // Update position
+                p.angle += p.speed;
+
+                // Particles in outer core occasionally get pulled back down
+                if (depth < 2890 && depth > 2260 && !inPlume && Math.random() < 0.001) {
+                    p.radius = Math.max(p.radius - 50, EARTH.innerCore + 100);
+                }
+
+                // Reset particles that reach the surface
+                if (p.radius >= EARTH.lithosphere) {
+                    p.radius = EARTH.outerCore + Math.random() * 500;
+                    p.angle = Math.random() * Math.PI * 2;
+                }
+
+                // Draw particle
+                const x = cx + Math.cos(p.angle + rotation) * p.radius * scale / EARTH.radius;
+                const y = cy + Math.sin(p.angle + rotation) * p.radius * scale / EARTH.radius;
+
+                // Color based on layer and anomaly
+                let color;
+                if (inLLSVP) {
+                    color = DRAG_SCALE_CONSTANTS.llsvp.color;
+                } else if (inSlab) {
+                    color = DRAG_SCALE_CONSTANTS.slab.color;
+                } else if (inPlume) {
+                    color = DRAG_SCALE_CONSTANTS.plume.color;
+                } else if (layerConstants) {
+                    // Color by transmission speed: fast=cyan, medium=yellow, slow=red
+                    const speedRatio = p.speed / 0.003;
+                    if (speedRatio > 0.7) color = '#4ecdc4';  // Fast - cyan
+                    else if (speedRatio > 0.3) color = '#f39c12';  // Medium - yellow
+                    else color = '#e74c3c';  // Slow - red
+                } else {
+                    color = '#f39c12';
+                }
+
+                // Particle size based on stress accumulation (sigma)
+                const particleSize = layerConstants ?
+                    p.size * (0.5 + layerConstants.sigma * 0.8) : p.size;
+
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(x, y, particleSize, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Trail length based on speed
+                const trailLength = 0.05 + p.speed * 20;
+                ctx.strokeStyle = color;
+                ctx.globalAlpha = 0.3;
+                ctx.lineWidth = particleSize * 0.6;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                const trailX = cx + Math.cos(p.angle + rotation - trailLength) * p.radius * scale / EARTH.radius;
+                const trailY = cy + Math.sin(p.angle + rotation - trailLength) * p.radius * scale / EARTH.radius;
+                ctx.lineTo(trailX, trailY);
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+            });
+
+            // Draw legend overlay for drag flow
+            drawDragFlowLegend(cx, cy);
+        }
+
+        function getLayerFromDepth(depth) {
+            if (depth < 100) return { type: 'lithosphere', name: 'Lithosphere' };
+            if (depth < 410) return { type: 'upperMantle', name: 'Upper Mantle' };
+            if (depth < 660) return { type: 'upperMantle', name: 'Transition Zone' };
+            if (depth < 2700) return { type: 'lowerMantle', name: 'Lower Mantle' };
+            if (depth < 2890) return { type: 'dLayer', name: "D'' Layer" };
+            if (depth < 5150) return { type: 'outerCore', name: 'Outer Core' };
+            return { type: 'innerCore', name: 'Inner Core' };
+        }
+
+        function drawDragFlowLegend(cx, cy) {
+            ctx.fillStyle = 'rgba(10, 10, 26, 0.85)';
+            ctx.fillRect(10, 10, 180, 120);
+            ctx.strokeStyle = '#334';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(10, 10, 180, 120);
+
+            ctx.fillStyle = '#7cb3ff';
+            ctx.font = 'bold 11px sans-serif';
+            ctx.fillText('Drag Flow Speed', 20, 28);
+
+            ctx.font = '10px sans-serif';
+            const items = [
+                { color: '#4ecdc4', label: 'Fast (high lambda, low kappa)' },
+                { color: '#f39c12', label: 'Moderate transmission' },
+                { color: '#e74c3c', label: 'Slow (high drag, storage)' },
+                { color: '#9b59b6', label: 'LLSVP channeling' },
+                { color: '#3498db', label: 'Cold slab (blocked)' }
+            ];
+
+            items.forEach((item, i) => {
+                ctx.fillStyle = item.color;
+                ctx.beginPath();
+                ctx.arc(25, 45 + i * 18, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#ccc';
+                ctx.fillText(item.label, 35, 48 + i * 18);
+            });
+        }
+
+        function shadeColor(color, percent) {
+            const num = parseInt(color.replace('#', ''), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = (num >> 16) + amt;
+            const G = (num >> 8 & 0x00FF) + amt;
+            const B = (num & 0x0000FF) + amt;
+            return '#' + (0x1000000 +
+                (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+                (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+                (B < 255 ? B < 1 ? 0 : B : 255)
+            ).toString(16).slice(1);
+        }
+
+        // =====================================================
+        // POPULATE UI ELEMENTS
+        // =====================================================
+
+        function populateDragConstantsTable() {
+            const table = document.getElementById('dragConstantsTable');
+            if (!table) return;
+
+            const layerOrder = [
+                'lithosphere', 'upperMantle', 'lowerMantle', 'dLayer',
+                'outerCore', 'innerCore', 'llsvp', 'slab', 'plume', 'ulvz', 'volcanic'
+            ];
+
+            let html = '';
+            layerOrder.forEach(key => {
+                const c = DRAG_SCALE_CONSTANTS[key];
+                if (!c) return;
+
+                const kappaClass = c.kappa > 0.7 ? 'high' : c.kappa > 0.4 ? 'medium' : 'low';
+                const sigmaClass = c.sigma > 0.7 ? 'high' : c.sigma > 0.4 ? 'medium' : 'low';
+                const lambdaClass = c.lambda > 0.7 ? 'low' : c.lambda > 0.4 ? 'medium' : 'high';
+
+                html += `
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 10px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="width: 12px; height: 12px; background: ${c.color}; border-radius: 3px;"></div>
+                                <span>${c.name}</span>
+                            </div>
+                        </td>
+                        <td style="padding: 10px;">
+                            <span class="drag-value ${kappaClass}">${c.kappa.toFixed(2)}</span>
+                        </td>
+                        <td style="padding: 10px;">
+                            <span>${formatTau(c.tau)}</span>
+                        </td>
+                        <td style="padding: 10px;">
+                            <span class="drag-value ${sigmaClass}">${c.sigma.toFixed(2)}</span>
+                        </td>
+                        <td style="padding: 10px;">
+                            <span class="drag-value ${lambdaClass}">${c.lambda.toFixed(2)}</span>
+                        </td>
+                        <td style="padding: 10px; font-size: 0.8em; color: var(--text-secondary);">
+                            ${c.mechanism}
+                        </td>
+                    </tr>
+                `;
+            });
+
+            table.innerHTML = html;
+        }
+
+        function formatTau(tau) {
+            if (tau >= 1e15) return `~${(tau / 1e15).toFixed(0)}×10<sup>15</sup> s (Myr)`;
+            if (tau >= 1e12) return `~${(tau / 1e12).toFixed(0)}×10<sup>12</sup> s (kyr)`;
+            if (tau >= 1e8) return `~${(tau / 1e8).toFixed(0)}×10<sup>8</sup> s (yr)`;
+            if (tau >= 1e6) return `~${(tau / 1e6).toFixed(0)}×10<sup>6</sup> s (days)`;
+            if (tau >= 1e4) return `~${(tau / 1e4).toFixed(0)}×10<sup>4</sup> s (hrs)`;
+            return `~${tau.toFixed(0)} s`;
+        }
+
+        function populateRegionalTimingCards() {
+            const container = document.getElementById('regionalTimingCards');
+            if (!container) return;
+
+            const regions = [
+                'Japan', 'Indonesia', 'South America', 'Alaska',
+                'California', 'Mediterranean', 'Philippines', 'New Zealand'
+            ];
+
+            let html = '';
+            regions.forEach(region => {
+                const timing = getRegionalTimingSignature(region);
+                const signatureColor = timing.signature === 'rapid' ? '#e74c3c' :
+                                       timing.signature === 'moderate' ? '#f39c12' : '#3498db';
+
+                html += `
+                    <div style="background: var(--bg-tertiary); border-radius: 8px; padding: 15px; border-left: 4px solid ${signatureColor};">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <strong style="font-size: 0.95em;">${region}</strong>
+                            <span style="background: ${signatureColor}; color: white; padding: 3px 8px; border-radius: 10px; font-size: 0.7em; text-transform: uppercase;">
+                                ${timing.signature}
+                            </span>
+                        </div>
+                        <div style="font-size: 0.8em; color: var(--text-secondary); margin-bottom: 8px;">
+                            Expected Window: <strong style="color: var(--text-primary);">${timing.expectedWindow}</strong>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 0.75em;">
+                            <div>Kappa: <span style="color: ${timing.kappa > 0.6 ? '#e74c3c' : '#2ecc71'};">${timing.kappa.toFixed(2)}</span></div>
+                            <div>Lambda: <span style="color: ${timing.lambda > 0.5 ? '#2ecc71' : '#e74c3c'};">${timing.lambda.toFixed(2)}</span></div>
+                            <div>Sigma: <span style="color: ${timing.sigma > 0.6 ? '#e74c3c' : '#2ecc71'};">${timing.sigma.toFixed(2)}</span></div>
+                            <div>Thermal: <span>${timing.thermalSignature.toFixed(2)}</span></div>
+                        </div>
+                        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-color); font-size: 0.75em; color: var(--text-secondary);">
+                            ${timing.recommendation}
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            initCanvas();
+            populateDragConstantsTable();
+            populateRegionalTimingCards();
+        });
+    </script>
+</body>
+</html>

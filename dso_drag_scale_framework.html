@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSO - Drag and Scale: Unified Framework</title>
+    <link rel="stylesheet" href="shared/styles.css">
+    <script src="shared/nav.js"></script>
+    <style>
+        .paper-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .paper-header {
+            text-align: center;
+            padding: 40px 0;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 40px;
+            background: linear-gradient(135deg, rgba(244, 208, 63, 0.1), rgba(124, 179, 255, 0.1));
+            border-radius: 12px;
+        }
+
+        .paper-title {
+            font-size: 2.2em;
+            color: var(--accent-blue);
+            margin-bottom: 15px;
+        }
+
+        .paper-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        .paper-meta {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+
+        .paper-author {
+            font-size: 1.1em;
+            color: var(--accent-yellow);
+            margin-bottom: 10px;
+        }
+
+        .paper-section {
+            margin-bottom: 50px;
+        }
+
+        .paper-section h2 {
+            color: var(--accent-blue);
+            font-size: 1.5em;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .paper-section h3 {
+            color: var(--accent-yellow);
+            font-size: 1.15em;
+            margin: 30px 0 15px 0;
+        }
+
+        .paper-section p {
+            color: var(--text-secondary);
+            line-height: 1.9;
+            margin-bottom: 18px;
+            text-align: justify;
+        }
+
+        .core-concept {
+            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
+            border: 1px solid var(--accent-yellow);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+
+        .core-concept h4 {
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .equation-box {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 25px;
+            margin: 25px 0;
+            text-align: center;
+            font-family: 'Times New Roman', serif;
+            font-size: 1.2em;
+            color: var(--text-primary);
+        }
+
+        .equation-main {
+            font-size: 1.8em;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+        }
+
+        .equation-label {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .figure-box {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .figure-canvas {
+            width: 100%;
+            height: 300px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .figure-caption {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .proposition-box {
+            background: rgba(124, 179, 255, 0.1);
+            border-left: 4px solid var(--accent-blue);
+            padding: 20px 25px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .proposition-box strong {
+            color: var(--accent-blue);
+        }
+
+        .manifestation-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 25px 0;
+        }
+
+        .manifestation-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .manifestation-card h5 {
+            color: var(--accent-blue);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .manifestation-card ul {
+            color: var(--text-secondary);
+            margin-left: 20px;
+            font-size: 0.9em;
+        }
+
+        .manifestation-card li {
+            margin-bottom: 5px;
+        }
+
+        .insight-box {
+            background: rgba(244, 208, 63, 0.1);
+            border: 1px solid rgba(244, 208, 63, 0.3);
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin: 20px 0;
+        }
+
+        .insight-box::before {
+            content: "💡 Key Insight: ";
+            color: var(--accent-yellow);
+            font-weight: 600;
+        }
+
+        .toc {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 40px;
+        }
+
+        .toc h3 {
+            color: var(--accent-blue);
+            margin-bottom: 20px;
+        }
+
+        .toc ul {
+            list-style: none;
+            columns: 2;
+        }
+
+        .toc li {
+            padding: 8px 0;
+        }
+
+        .toc a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .toc a:hover {
+            color: var(--accent-blue);
+        }
+
+        .proposition-summary {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 40px;
+        }
+
+        .proposition-summary h3 {
+            color: var(--accent-blue);
+            margin-bottom: 20px;
+        }
+
+        .proposition-list {
+            list-style: none;
+        }
+
+        .proposition-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            gap: 15px;
+        }
+
+        .proposition-list li:last-child {
+            border-bottom: none;
+        }
+
+        .prop-num {
+            background: var(--accent-blue);
+            color: #fff;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85em;
+            flex-shrink: 0;
+        }
+
+        .prop-text {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .toc ul {
+                columns: 1;
+            }
+            .manifestation-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body data-dso-page="drag-scale">
+    <div class="page-container paper-container">
+        <!-- Paper Header -->
+        <div class="paper-header">
+            <h1 class="paper-title">Drag and Scale: A Unified Framework for Fundamental Physical Phenomena</h1>
+            <p class="paper-subtitle">A Theoretical Proposition Requiring Formal Evaluation</p>
+            <p class="paper-author">Joe William Garrett</p>
+            <p class="paper-meta">December 2025 | DSO Theoretical Framework</p>
+        </div>
+
+        <!-- Table of Contents -->
+        <div class="toc">
+            <h3>Contents</h3>
+            <ul>
+                <li><a href="#abstract">1. Abstract</a></li>
+                <li><a href="#introduction">2. Introduction</a></li>
+                <li><a href="#foundations">3. Foundational Definitions</a></li>
+                <li><a href="#core-theorem">4. Core Theorem: E = drag × scale²</a></li>
+                <li><a href="#observer">5. The Observer Problem</a></li>
+                <li><a href="#photon">6. The Photon as Pure Expression</a></li>
+                <li><a href="#black-holes">7. Black Holes as Conversion Thresholds</a></li>
+                <li><a href="#entanglement">8. Quantum Entanglement</a></li>
+                <li><a href="#conservation">9. Conservation Laws</a></li>
+                <li><a href="#propositions">10. Core Propositions Summary</a></li>
+            </ul>
+        </div>
+
+        <!-- Abstract -->
+        <div class="paper-section" id="abstract">
+            <h2><span>📄</span> 1. Abstract</h2>
+            <p>
+                This paper proposes a unified conceptual framework that reconceptualizes fundamental physical
+                quantities—mass, time, distance, energy, entropy, and spacetime curvature—as manifestations of
+                two primary phenomena: <strong>drag</strong> and <strong>scale</strong>. The framework suggests
+                that E=mc² can be reinterpreted as E = drag × scale², where mass represents localized drag
+                (resistance to unbounded existence) and c represents scale (the fundamental fabric of extension).
+            </p>
+            <p>
+                This interpretation positions the observer not as external to physical law but as constitutive
+                of it—the act of observation itself being a drag-bound process that renders physical quantities
+                into measurable form. The framework offers potential resolution to several persistent theoretical
+                tensions, including the measurement problem in quantum mechanics, the nature of black hole
+                singularities, and the challenge of quantum-gravitational unification.
+            </p>
+        </div>
+
+        <!-- Introduction -->
+        <div class="paper-section" id="introduction">
+            <h2><span>🔬</span> 2. Introduction: The Problem of Categorical Proliferation</h2>
+            <p>
+                Contemporary physics operates with a proliferation of fundamental categories: mass, energy, time,
+                space, charge, spin, entropy, and numerous others. Each category carries its own conservation laws,
+                transformation rules, and mathematical apparatus. While this categorical richness has enabled
+                extraordinary predictive success, it has also generated persistent unification problems—most notably
+                the incompatibility between general relativity and quantum mechanics.
+            </p>
+            <p>
+                This paper proposes that the categorical multiplicity of physics may be downstream of a simpler
+                underlying structure. Specifically, it advances the hypothesis that physical phenomena can be
+                reconceptualized as manifestations of two fundamental processes:
+            </p>
+            <div class="manifestation-grid">
+                <div class="manifestation-card">
+                    <h5><span>⚡</span> Drag</h5>
+                    <p style="color: var(--text-secondary); font-size: 0.9em;">
+                        Resistance, binding, the cost of localized existence
+                    </p>
+                </div>
+                <div class="manifestation-card">
+                    <h5><span>📐</span> Scale</h5>
+                    <p style="color: var(--text-secondary); font-size: 0.9em;">
+                        Extension, fabric, the structure that permits spatial and temporal relation
+                    </p>
+                </div>
+            </div>
+            <p>
+                The framework further proposes that energy is not a third fundamental quantity but rather the
+                constant relationship between drag and scale—the invariant that permits their exchange. This
+                positions energy not as a substance but as the fact of relation itself.
+            </p>
+        </div>
+
+        <!-- Foundational Definitions -->
+        <div class="paper-section" id="foundations">
+            <h2><span>📚</span> 3. Foundational Definitions</h2>
+
+            <div class="core-concept">
+                <h4>3.1 Drag</h4>
+                <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                    <strong>Definition:</strong> Drag is the fundamental resistance phenomenon that manifests as
+                    mass, inertia, time, gravity, entropy, and all forms of physical resistance. It represents
+                    the binding or cost associated with localized, differentiated existence.
+                </p>
+                <div class="manifestation-grid">
+                    <div class="manifestation-card">
+                        <h5>Physical Manifestations</h5>
+                        <ul>
+                            <li>Mass (localized drag)</li>
+                            <li>Time (drag against simultaneity)</li>
+                            <li>Inertia (drag against acceleration)</li>
+                            <li>Gravity (accumulated drag curving scale)</li>
+                        </ul>
+                    </div>
+                    <div class="manifestation-card">
+                        <h5>Resistance Phenomena</h5>
+                        <ul>
+                            <li>Entropy (drag against coherence)</li>
+                            <li>Thermal resistance</li>
+                            <li>Electrical resistance</li>
+                            <li>All friction phenomena</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="insight-box">
+                    The linguistic convergence across physics—the repeated use of 'resistance' terminology
+                    across domains—suggests an underlying unity that the framework makes explicit.
+                </div>
+            </div>
+
+            <div class="core-concept">
+                <h4>3.2 Scale</h4>
+                <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                    <strong>Definition:</strong> Scale is the fundamental extension phenomenon that manifests as
+                    space, distance, the fabric of spacetime, and the structure that permits relation across
+                    differentiated points.
+                </p>
+                <div class="manifestation-card" style="margin-top: 15px;">
+                    <h5>Manifestations of Scale</h5>
+                    <ul>
+                        <li>Space and distance</li>
+                        <li>Spatial dimensionality</li>
+                        <li>The 'fabric' described in general relativity</li>
+                        <li>The metric structure that permits measurement of separation</li>
+                    </ul>
+                </div>
+                <div class="insight-box">
+                    The speed of light (c) is reconceptualized not as a velocity limit but as the fundamental
+                    measure of scale itself—the baseline extension against which drag is measured. Photons do
+                    not 'travel at c'; rather, c is the mode of being that exists without drag's constraints.
+                </div>
+            </div>
+
+            <div class="core-concept">
+                <h4>3.3 Energy as Relational Constant</h4>
+                <p style="color: var(--text-secondary);">
+                    <strong>Definition:</strong> Energy is not a substance but the constant relationship between
+                    drag and scale—the invariant that permits their exchange and transformation.
+                </p>
+                <p style="color: var(--text-secondary); margin-top: 15px;">
+                    <strong>Key Properties:</strong> Energy is everywhere (present at every point where drag and
+                    scale relate) and nowhere (having no independent location or existence). It appears only as
+                    the expression of other quantities—as mass, motion, heat, light—but never as 'pure energy'
+                    in isolation.
+                </p>
+                <div class="proposition-box" style="margin-top: 15px;">
+                    <strong>Implication for Conservation:</strong> Conservation of energy is not a law imposed on
+                    the universe but a description of what energy is—the unchanging fact of relation while drag
+                    and scale transform. There is nothing to create or destroy because energy is not a quantity
+                    but the permission for quantities to exchange.
+                </div>
+            </div>
+        </div>
+
+        <!-- Core Theorem -->
+        <div class="paper-section" id="core-theorem">
+            <h2><span>⚛️</span> 4. The Core Theorem: Reinterpretation of Mass-Energy Equivalence</h2>
+
+            <h3>4.1 Standard Formulation</h3>
+            <p>Einstein's mass-energy equivalence:</p>
+            <div class="equation-box">
+                <div class="equation-main">E = mc²</div>
+                <div class="equation-label">Where E is energy, m is mass, and c is the speed of light in vacuum</div>
+            </div>
+
+            <h3>4.2 Proposed Reinterpretation</h3>
+            <p>Under the drag-scale framework:</p>
+            <div class="equation-box">
+                <div class="equation-main">E = drag × scale²</div>
+                <div class="equation-label">The fundamental relationship between resistance and extension</div>
+            </div>
+
+            <div class="figure-box">
+                <canvas id="fig-energy-relationship" class="figure-canvas"></canvas>
+                <div class="figure-caption">
+                    Figure 1: The drag-scale-energy relationship. Drag (localized resistance) and scale (extension fabric)
+                    exchange through the constant of energy.
+                </div>
+            </div>
+
+            <div class="manifestation-grid">
+                <div class="manifestation-card">
+                    <h5>drag (m)</h5>
+                    <p style="color: var(--text-secondary); font-size: 0.9em;">
+                        Localized resistance; the binding that creates mass as experienced phenomenon
+                    </p>
+                </div>
+                <div class="manifestation-card">
+                    <h5>scale (c)</h5>
+                    <p style="color: var(--text-secondary); font-size: 0.9em;">
+                        The fundamental fabric of extension; not a speed but the measure of unbounded relation
+                    </p>
+                </div>
+                <div class="manifestation-card">
+                    <h5>scale² (c²)</h5>
+                    <p style="color: var(--text-secondary); font-size: 0.9em;">
+                        The full dimensionality of the fabric; extension in complete form
+                    </p>
+                </div>
+                <div class="manifestation-card">
+                    <h5>energy (E)</h5>
+                    <p style="color: var(--text-secondary); font-size: 0.9em;">
+                        The constant relationship that permits drag and scale to exchange
+                    </p>
+                </div>
+            </div>
+
+            <h3>4.3 Interpretive Consequences</h3>
+            <p>
+                This reinterpretation suggests that Einstein's equation, while mathematically precise, was
+                described from within the observer's frame without recognition that the equation describes
+                what observation produces rather than observer-independent reality. The equation remains
+                valid; its meaning shifts from description of external relationships to description of how
+                drag-bound observers necessarily experience drag-scale conversion.
+            </p>
+        </div>
+
+        <!-- Observer Problem -->
+        <div class="paper-section" id="observer">
+            <h2><span>👁️</span> 5. The Observer Problem Dissolved</h2>
+
+            <h3>5.1 The Observer as Downstream of Process</h3>
+            <p>
+                A critical element of this framework is the reconceptualization of the observer. In standard
+                physics, the observer is treated as external to the phenomena observed—a neutral measuring
+                apparatus that records but does not constitute physical events.
+            </p>
+            <p>
+                The drag-scale framework proposes instead that observers are <strong>drag-bound entities
+                existing within scale</strong>. The act of observation is itself a drag-bound process.
+                Observers cannot perceive what they are not structured to perceive; they necessarily render
+                phenomena into the categories (mass, time, distance) that their own drag-bound existence requires.
+            </p>
+
+            <div class="figure-box">
+                <canvas id="fig-observer" class="figure-canvas"></canvas>
+                <div class="figure-caption">
+                    Figure 2: The observer as a drag-bound entity. Observation imposes categorical structure
+                    onto phenomena that precede those categories.
+                </div>
+            </div>
+
+            <h3>5.2 Implications for Quantum Measurement</h3>
+            <p>
+                The quantum measurement problem asks why observation 'collapses' superposition into definite
+                states. Under the drag-scale framework, this is not mysterious: observation is a drag-bound
+                process that imposes the categories of definiteness. The superposition was never 'there' in
+                the way classical objects are 'there'; the act of drag-bound measurement renders the quantum
+                state into drag-bound terms.
+            </p>
+            <div class="proposition-box">
+                The photon, being without drag, does not experience space or time. When we measure it, we
+                force it into our categories—particle or wave, position or momentum. This is not the photon
+                changing; it is the observer imposing drag-bound structure onto that which precedes such structure.
+            </div>
+        </div>
+
+        <!-- Photon -->
+        <div class="paper-section" id="photon">
+            <h2><span>💫</span> 6. The Photon as Pure Expression</h2>
+            <p>
+                In standard physics, the photon is described as a massless particle traveling at the speed
+                of light. Under the drag-scale framework, this description inverts:
+            </p>
+            <div class="core-concept">
+                <p style="color: var(--text-primary); font-size: 1.1em; text-align: center;">
+                    The photon does not 'travel at c.' <br>
+                    <strong style="color: var(--accent-yellow);">The photon IS c</strong>—pure scale,
+                    the constant itself made manifest.
+                </p>
+            </div>
+            <p>
+                Without drag, the photon does not participate in time or distance as experienced phenomena.
+                From the photon's 'perspective' (acknowledging this term's limitations), emission and
+                absorption are the same point; there is no journey because journey requires the drag-bound
+                categories of duration and separation.
+            </p>
+            <p>
+                When mass converts to energy (as in nuclear reactions), it is not 'accelerating to light
+                speed' but releasing from drag back into the constant state the photon never left. The c²
+                term represents the complete release—out of drag, into full scale.
+            </p>
+        </div>
+
+        <!-- Black Holes -->
+        <div class="paper-section" id="black-holes">
+            <h2><span>🕳️</span> 7. Black Holes as Conversion Thresholds ('Holds')</h2>
+
+            <h3>7.1 Terminological Reframing</h3>
+            <p>
+                The term 'black hole' reveals observer bias: 'black' (absence of light reaching us) and
+                'hole' (a gap in our map). The framework proposes the alternative term <strong>'hold'</strong>—a
+                place where drag concentrates, saturates, and converts.
+            </p>
+
+            <h3>7.2 The Conversion Process</h3>
+            <p>
+                Under standard physics, black holes present singularities where equations yield infinities—typically
+                interpreted as physics 'breaking down.' The drag-scale framework offers an alternative interpretation:
+            </p>
+            <div class="proposition-box">
+                Black holes are not where physics breaks but where <strong>drag saturates and converts back
+                into scale</strong>. The process follows a natural sequence: drag accumulates, concentrates,
+                reaches saturation threshold, overlaps, and unfolds back into scaled fabric.
+            </div>
+
+            <div class="figure-box">
+                <canvas id="fig-blackhole" class="figure-canvas"></canvas>
+                <div class="figure-caption">
+                    Figure 3: The black hole as conversion threshold. Drag concentrates at the event horizon
+                    and converts back into scale, rather than collapsing to infinite density.
+                </div>
+            </div>
+
+            <h3>7.3 Resolution of Black Hole Paradoxes</h3>
+            <div class="manifestation-grid">
+                <div class="manifestation-card">
+                    <h5>The Information Paradox</h5>
+                    <p style="color: var(--text-secondary); font-size: 0.9em;">
+                        Information is relationship across separation; separation is a drag phenomenon. At the
+                        conversion threshold, the framework that permits 'information' to have meaning transforms.
+                        Information is not lost; the category converts.
+                    </p>
+                </div>
+                <div class="manifestation-card">
+                    <h5>The Singularity Problem</h5>
+                    <p style="color: var(--text-secondary); font-size: 0.9em;">
+                        Mathematical infinities arise from applying drag-bound equations beyond their domain.
+                        The singularity is not a physical infinity but a categorical boundary—where tools
+                        designed for drag-scale interaction cannot describe what occurs in pure conversion.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Entanglement -->
+        <div class="paper-section" id="entanglement">
+            <h2><span>🔗</span> 8. Quantum Entanglement Reconsidered</h2>
+            <p>
+                Quantum entanglement presents 'spooky action at a distance'—correlated measurements between
+                spatially separated particles that appear to violate locality. Standard interpretations
+                struggle to explain how information could travel faster than light, or propose non-local
+                hidden variables.
+            </p>
+            <div class="core-concept">
+                <p style="color: var(--text-primary); text-align: center; font-size: 1.1em;">
+                    Entangled particles are not two things connected across distance.<br>
+                    <strong style="color: var(--accent-yellow);">They are one thing that the drag-bound
+                    observer perceives as two.</strong>
+                </p>
+            </div>
+            <p>
+                Locality is an observer imposition. Separation is a drag phenomenon. The entangled system
+                exists prior to the categories that would make 'distance' meaningful. When we measure, we
+                render the unity into our spatial terms—and then marvel that correlations exceed what our
+                spatial assumptions permit.
+            </p>
+            <div class="proposition-box">
+                The particles never 'communicated' because they were never separate. The framework that
+                creates 'separate' (drag-bound observation) was applied at measurement, not before.
+            </div>
+        </div>
+
+        <!-- Conservation -->
+        <div class="paper-section" id="conservation">
+            <h2><span>⚖️</span> 9. Conservation Laws as Single Phenomenon</h2>
+            <p>
+                Physics maintains multiple conservation laws: conservation of energy, momentum, angular
+                momentum, charge, baryon number, lepton number, and others. Each has its own mathematical
+                apparatus. The drag-scale framework suggests these are not independent laws but manifestations
+                of a single conserved relationship: the drag-scale-energy triad.
+            </p>
+            <p>
+                If energy is the constant relationship between drag and scale, and all physical quantities
+                are expressions of drag-scale interaction, then all conservation laws reduce to: <strong>the
+                relationship is conserved</strong>. Different 'conservation laws' are different accounting
+                views of the same invariant.
+            </p>
+            <div class="insight-box">
+                This explains why conservation laws share structural similarities and why violations of one
+                typically imply violations of others—they are not independent constraints but aspects of a
+                single constraint viewed from different categorical angles.
+            </div>
+        </div>
+
+        <!-- Core Propositions -->
+        <div class="paper-section" id="propositions">
+            <h2><span>📋</span> 10. Core Propositions Summary</h2>
+
+            <div class="proposition-summary">
+                <h3>The Ten Propositions</h3>
+                <ul class="proposition-list">
+                    <li>
+                        <span class="prop-num">P1</span>
+                        <span class="prop-text">All physical resistance phenomena (mass, inertia, gravity, entropy, time, friction, etc.) are manifestations of a single phenomenon: <strong>drag</strong>.</span>
+                    </li>
+                    <li>
+                        <span class="prop-num">P2</span>
+                        <span class="prop-text">All physical extension phenomena (space, distance, spacetime fabric) are manifestations of a single phenomenon: <strong>scale</strong>.</span>
+                    </li>
+                    <li>
+                        <span class="prop-num">P3</span>
+                        <span class="prop-text">Energy is not a substance but the constant relationship between drag and scale that permits their exchange.</span>
+                    </li>
+                    <li>
+                        <span class="prop-num">P4</span>
+                        <span class="prop-text">E = mc² can be reinterpreted as <strong>E = drag × scale²</strong>, where m represents localized drag and c represents scale.</span>
+                    </li>
+                    <li>
+                        <span class="prop-num">P5</span>
+                        <span class="prop-text">The photon is not 'traveling at c' but is pure scale expression, without drag's constraints.</span>
+                    </li>
+                    <li>
+                        <span class="prop-num">P6</span>
+                        <span class="prop-text">Observers are drag-bound entities that necessarily render phenomena into drag-bound categories.</span>
+                    </li>
+                    <li>
+                        <span class="prop-num">P7</span>
+                        <span class="prop-text">Black holes are conversion thresholds where saturated drag unfolds back into scale.</span>
+                    </li>
+                    <li>
+                        <span class="prop-num">P8</span>
+                        <span class="prop-text">Entangled particles are one phenomenon perceived as two by drag-bound observers.</span>
+                    </li>
+                    <li>
+                        <span class="prop-num">P9</span>
+                        <span class="prop-text">Conservation laws are different accounting views of a single invariant: the drag-scale-energy relationship.</span>
+                    </li>
+                    <li>
+                        <span class="prop-num">P10</span>
+                        <span class="prop-text">Physical equations describe observer experience, not observer-independent reality.</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Navigation to expanded version -->
+        <div class="card" style="margin-top: 40px;">
+            <div class="card-header">
+                <h2><span class="icon">📖</span> Continue Reading</h2>
+            </div>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <a href="dso_drag_scale_expanded.html" class="btn btn-primary">
+                    <span>📚</span> Expanded Framework with Mathematical Formalization
+                </a>
+                <a href="dso_physics.html" class="btn btn-secondary">
+                    <span>⚛️</span> DSO Physical Basis
+                </a>
+                <a href="dso_whitepaper.html" class="btn btn-secondary">
+                    <span>📄</span> Model Whitepaper
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Figure 1: Energy-Drag-Scale Relationship
+        function drawEnergyRelationship() {
+            const canvas = document.getElementById('fig-energy-relationship');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = canvas.offsetWidth * 2;
+            canvas.height = canvas.offsetHeight * 2;
+            ctx.scale(2, 2);
+
+            const w = canvas.offsetWidth;
+            const h = canvas.offsetHeight;
+            const centerX = w / 2;
+            const centerY = h / 2;
+
+            // Background
+            ctx.fillStyle = '#0a0a1a';
+            ctx.fillRect(0, 0, w, h);
+
+            // Draw triangle relationship
+            const radius = Math.min(w, h) * 0.35;
+            const points = [
+                { x: centerX, y: centerY - radius, label: 'ENERGY', color: '#4ecdc4', desc: 'The constant relationship' },
+                { x: centerX - radius * 0.87, y: centerY + radius * 0.5, label: 'DRAG', color: '#f4d03f', desc: 'Resistance / Mass' },
+                { x: centerX + radius * 0.87, y: centerY + radius * 0.5, label: 'SCALE', color: '#7cb3ff', desc: 'Extension / c' }
+            ];
+
+            // Draw connecting lines with gradient
+            ctx.lineWidth = 3;
+            for (let i = 0; i < 3; i++) {
+                const from = points[i];
+                const to = points[(i + 1) % 3];
+
+                const gradient = ctx.createLinearGradient(from.x, from.y, to.x, to.y);
+                gradient.addColorStop(0, from.color);
+                gradient.addColorStop(1, to.color);
+
+                ctx.strokeStyle = gradient;
+                ctx.beginPath();
+                ctx.moveTo(from.x, from.y);
+                ctx.lineTo(to.x, to.y);
+                ctx.stroke();
+            }
+
+            // Draw nodes
+            points.forEach(point => {
+                // Glow
+                const glow = ctx.createRadialGradient(point.x, point.y, 0, point.x, point.y, 40);
+                glow.addColorStop(0, point.color + '40');
+                glow.addColorStop(1, 'transparent');
+                ctx.fillStyle = glow;
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, 40, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Node
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, 25, 0, Math.PI * 2);
+                ctx.fillStyle = point.color;
+                ctx.fill();
+
+                // Label
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 11px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(point.label, point.x, point.y + 4);
+
+                // Description
+                ctx.fillStyle = '#889';
+                ctx.font = '10px sans-serif';
+                const descY = point.label === 'ENERGY' ? point.y - 40 : point.y + 45;
+                ctx.fillText(point.desc, point.x, descY);
+            });
+
+            // Center equation
+            ctx.fillStyle = '#f4d03f';
+            ctx.font = 'bold 16px serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('E = drag × scale²', centerX, centerY + 5);
+        }
+
+        // Figure 2: Observer as drag-bound entity
+        function drawObserver() {
+            const canvas = document.getElementById('fig-observer');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = canvas.offsetWidth * 2;
+            canvas.height = canvas.offsetHeight * 2;
+            ctx.scale(2, 2);
+
+            const w = canvas.offsetWidth;
+            const h = canvas.offsetHeight;
+
+            // Background
+            ctx.fillStyle = '#0a0a1a';
+            ctx.fillRect(0, 0, w, h);
+
+            // Quantum realm (left side) - fuzzy, superposed
+            ctx.fillStyle = 'rgba(155, 89, 182, 0.2)';
+            ctx.fillRect(0, 0, w * 0.4, h);
+
+            // Draw superposition waves
+            ctx.strokeStyle = 'rgba(155, 89, 182, 0.5)';
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 5; i++) {
+                ctx.beginPath();
+                for (let x = 20; x < w * 0.35; x++) {
+                    const y = h / 2 + Math.sin(x * 0.05 + i * 0.5) * 30 * Math.sin(i * 0.3);
+                    if (x === 20) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+
+            ctx.fillStyle = '#9b59b6';
+            ctx.font = '11px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Pre-observation', w * 0.2, 30);
+            ctx.fillText('(superposition)', w * 0.2, 45);
+
+            // Observer (center)
+            const obsX = w * 0.5;
+            const obsY = h / 2;
+
+            // Observer glow
+            const obsGlow = ctx.createRadialGradient(obsX, obsY, 0, obsX, obsY, 60);
+            obsGlow.addColorStop(0, 'rgba(244, 208, 63, 0.3)');
+            obsGlow.addColorStop(1, 'transparent');
+            ctx.fillStyle = obsGlow;
+            ctx.beginPath();
+            ctx.arc(obsX, obsY, 60, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Observer circle
+            ctx.beginPath();
+            ctx.arc(obsX, obsY, 35, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(244, 208, 63, 0.3)';
+            ctx.fill();
+            ctx.strokeStyle = '#f4d03f';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Eye symbol
+            ctx.beginPath();
+            ctx.ellipse(obsX, obsY, 15, 10, 0, 0, Math.PI * 2);
+            ctx.strokeStyle = '#f4d03f';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(obsX, obsY, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#f4d03f';
+            ctx.fill();
+
+            ctx.fillStyle = '#f4d03f';
+            ctx.font = 'bold 11px sans-serif';
+            ctx.fillText('OBSERVER', obsX, obsY + 55);
+            ctx.font = '10px sans-serif';
+            ctx.fillStyle = '#889';
+            ctx.fillText('(drag-bound)', obsX, obsY + 70);
+
+            // Classical realm (right side) - definite, measured
+            ctx.fillStyle = 'rgba(78, 205, 196, 0.1)';
+            ctx.fillRect(w * 0.6, 0, w * 0.4, h);
+
+            // Draw definite particles
+            const particles = [
+                { x: w * 0.75, y: h * 0.3 },
+                { x: w * 0.85, y: h * 0.5 },
+                { x: w * 0.7, y: h * 0.7 }
+            ];
+            particles.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+                ctx.fillStyle = '#4ecdc4';
+                ctx.fill();
+            });
+
+            ctx.fillStyle = '#4ecdc4';
+            ctx.font = '11px sans-serif';
+            ctx.fillText('Post-observation', w * 0.8, 30);
+            ctx.fillText('(definite states)', w * 0.8, 45);
+
+            // Arrow from quantum to classical through observer
+            ctx.strokeStyle = '#889';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 3]);
+            ctx.beginPath();
+            ctx.moveTo(w * 0.35, h / 2);
+            ctx.lineTo(w * 0.42, h / 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(w * 0.58, h / 2);
+            ctx.lineTo(w * 0.65, h / 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Arrow heads
+            ctx.fillStyle = '#889';
+            ctx.beginPath();
+            ctx.moveTo(w * 0.65, h / 2);
+            ctx.lineTo(w * 0.62, h / 2 - 5);
+            ctx.lineTo(w * 0.62, h / 2 + 5);
+            ctx.fill();
+
+            // Labels
+            ctx.fillStyle = '#889';
+            ctx.font = '10px sans-serif';
+            ctx.fillText('Measurement imposes', obsX, h - 30);
+            ctx.fillText('drag-bound categories', obsX, h - 15);
+        }
+
+        // Figure 3: Black hole as conversion threshold
+        function drawBlackhole() {
+            const canvas = document.getElementById('fig-blackhole');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = canvas.offsetWidth * 2;
+            canvas.height = canvas.offsetHeight * 2;
+            ctx.scale(2, 2);
+
+            const w = canvas.offsetWidth;
+            const h = canvas.offsetHeight;
+            const centerX = w / 2;
+            const centerY = h / 2;
+
+            // Background
+            ctx.fillStyle = '#0a0a1a';
+            ctx.fillRect(0, 0, w, h);
+
+            // Event horizon glow
+            const horizonGlow = ctx.createRadialGradient(centerX, centerY, 30, centerX, centerY, 120);
+            horizonGlow.addColorStop(0, 'rgba(231, 76, 60, 0.8)');
+            horizonGlow.addColorStop(0.3, 'rgba(155, 89, 182, 0.4)');
+            horizonGlow.addColorStop(0.6, 'rgba(124, 179, 255, 0.2)');
+            horizonGlow.addColorStop(1, 'transparent');
+            ctx.fillStyle = horizonGlow;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 120, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Event horizon
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 50, 0, Math.PI * 2);
+            ctx.strokeStyle = '#e74c3c';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Black center (conversion zone)
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 30, 0, Math.PI * 2);
+            ctx.fillStyle = '#000';
+            ctx.fill();
+
+            // Drag flowing in (arrows from outside)
+            ctx.strokeStyle = '#f4d03f';
+            ctx.fillStyle = '#f4d03f';
+            ctx.lineWidth = 2;
+            for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 4) {
+                const startR = 100;
+                const endR = 55;
+                const startX = centerX + Math.cos(angle) * startR;
+                const startY = centerY + Math.sin(angle) * startR;
+                const endX = centerX + Math.cos(angle) * endR;
+                const endY = centerY + Math.sin(angle) * endR;
+
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(endX, endY);
+                ctx.stroke();
+
+                // Arrow head
+                ctx.beginPath();
+                ctx.moveTo(endX, endY);
+                ctx.lineTo(endX + 8 * Math.cos(angle + 2.5), endY + 8 * Math.sin(angle + 2.5));
+                ctx.lineTo(endX + 8 * Math.cos(angle - 2.5), endY + 8 * Math.sin(angle - 2.5));
+                ctx.fill();
+            }
+
+            // Scale radiating out (wavy lines from center)
+            ctx.strokeStyle = '#7cb3ff';
+            ctx.lineWidth = 1.5;
+            for (let angle = Math.PI / 8; angle < Math.PI * 2; angle += Math.PI / 4) {
+                ctx.beginPath();
+                for (let r = 35; r < 90; r += 2) {
+                    const wave = Math.sin(r * 0.3) * 3;
+                    const x = centerX + Math.cos(angle + wave * 0.02) * r;
+                    const y = centerY + Math.sin(angle + wave * 0.02) * r;
+                    if (r === 35) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+
+            // Labels
+            ctx.font = '11px sans-serif';
+            ctx.textAlign = 'center';
+
+            ctx.fillStyle = '#f4d03f';
+            ctx.fillText('Drag In', centerX - 90, centerY - 80);
+
+            ctx.fillStyle = '#7cb3ff';
+            ctx.fillText('Scale Out', centerX + 90, centerY + 80);
+
+            ctx.fillStyle = '#e74c3c';
+            ctx.font = '10px sans-serif';
+            ctx.fillText('Event Horizon', centerX, centerY + 70);
+            ctx.fillText('(conversion threshold)', centerX, centerY + 82);
+
+            ctx.fillStyle = '#889';
+            ctx.fillText('NOT a singularity', centerX, centerY + 5);
+        }
+
+        // Initialize all figures
+        window.addEventListener('load', () => {
+            drawEnergyRelationship();
+            drawObserver();
+            drawBlackhole();
+        });
+
+        window.addEventListener('resize', () => {
+            drawEnergyRelationship();
+            drawObserver();
+            drawBlackhole();
+        });
+    </script>
+</body>
+</html>

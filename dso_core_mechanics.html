@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSO - Core Mechanics</title>
+    <link rel="stylesheet" href="shared/styles.css">
+    <script src="shared/nav.js"></script>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+    <style>
+        .mechanics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .core-diagram {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            height: 500px;
+            position: relative;
+        }
+
+        #core-canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+        }
+
+        .layer-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(10, 10, 26, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.85em;
+        }
+
+        .layer-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .layer-control input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+        }
+
+        .layer-control input[type="range"] {
+            width: 80px;
+        }
+
+        .properties-panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .property-group {
+            margin-bottom: 25px;
+        }
+
+        .property-group h3 {
+            color: var(--accent-blue);
+            margin-bottom: 15px;
+            font-size: 1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .property-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .property-name {
+            color: var(--text-secondary);
+        }
+
+        .property-value {
+            font-weight: 600;
+        }
+
+        .layer-legend {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .physics-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 20px;
+        }
+
+        .formula-box {
+            background: var(--bg-tertiary);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-family: 'Cambria Math', serif;
+            text-align: center;
+        }
+
+        .coupling-diagram {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .coupling-step {
+            background: var(--bg-tertiary);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            position: relative;
+        }
+
+        .coupling-step::after {
+            content: '→';
+            position: absolute;
+            right: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--accent-blue);
+            font-size: 1.5em;
+        }
+
+        .coupling-step:last-child::after {
+            display: none;
+        }
+
+        .coupling-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .coupling-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .coupling-desc {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 1000px) {
+            .mechanics-grid {
+                grid-template-columns: 1fr;
+            }
+            .coupling-diagram {
+                grid-template-columns: 1fr;
+            }
+            .coupling-step::after {
+                content: '↓';
+                right: 50%;
+                top: auto;
+                bottom: -20px;
+                transform: translateX(50%);
+            }
+        }
+    </style>
+</head>
+<body data-dso-page="mechanics">
+    <div class="page-container">
+        <div class="page-header">
+            <h1>&#9881; Core Mechanics</h1>
+            <p class="subtitle">Earth's internal structure and core-mantle dynamics</p>
+        </div>
+
+        <div class="mechanics-grid">
+            <!-- 3D Core Diagram -->
+            <div class="core-diagram">
+                <div class="card-header" style="border: none; margin-bottom: 10px;">
+                    <h2><span class="icon">&#127757;</span> Earth Cross-Section</h2>
+                </div>
+                <div id="core-canvas"></div>
+                <div class="layer-controls">
+                    <div style="font-weight: 600; margin-bottom: 10px;">Layers</div>
+                    <div class="layer-control">
+                        <input type="checkbox" id="show-crust" checked>
+                        <label for="show-crust">Crust</label>
+                    </div>
+                    <div class="layer-control">
+                        <input type="checkbox" id="show-mantle" checked>
+                        <label for="show-mantle">Mantle</label>
+                    </div>
+                    <div class="layer-control">
+                        <input type="checkbox" id="show-outer" checked>
+                        <label for="show-outer">Outer Core</label>
+                    </div>
+                    <div class="layer-control">
+                        <input type="checkbox" id="show-inner" checked>
+                        <label for="show-inner">Inner Core</label>
+                    </div>
+                    <div style="margin-top: 15px; font-weight: 600;">Offset</div>
+                    <div class="layer-control">
+                        <input type="range" id="offset-slider" min="0" max="5" step="0.1" value="1.2">
+                        <span id="offset-value">1.2 km</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Properties Panel -->
+            <div class="properties-panel">
+                <div class="property-group">
+                    <h3><span style="color: var(--accent-yellow);">&#9679;</span> Inner Core</h3>
+                    <div class="property-row">
+                        <span class="property-name">Radius</span>
+                        <span class="property-value">1,220 km</span>
+                    </div>
+                    <div class="property-row">
+                        <span class="property-name">Composition</span>
+                        <span class="property-value">Solid Fe-Ni</span>
+                    </div>
+                    <div class="property-row">
+                        <span class="property-name">Temperature</span>
+                        <span class="property-value">~5,400°C</span>
+                    </div>
+                    <div class="property-row">
+                        <span class="property-name">Density</span>
+                        <span class="property-value">13 g/cm³</span>
+                    </div>
+                    <div class="property-row">
+                        <span class="property-name">Current Offset</span>
+                        <span class="property-value" style="color: var(--accent-yellow);">1.24 km</span>
+                    </div>
+                </div>
+
+                <div class="property-group">
+                    <h3><span style="color: var(--accent-orange);">&#9679;</span> Outer Core</h3>
+                    <div class="property-row">
+                        <span class="property-name">Thickness</span>
+                        <span class="property-value">2,260 km</span>
+                    </div>
+                    <div class="property-row">
+                        <span class="property-name">Composition</span>
+                        <span class="property-value">Liquid Fe-Ni</span>
+                    </div>
+                    <div class="property-row">
+                        <span class="property-name">Temperature</span>
+                        <span class="property-value">4,000-5,400°C</span>
+                    </div>
+                    <div class="property-row">
+                        <span class="property-name">Density</span>
+                        <span class="property-value">10-12 g/cm³</span>
+                    </div>
+                </div>
+
+                <div class="property-group">
+                    <h3><span style="color: #8B4513;">&#9679;</span> Mantle</h3>
+                    <div class="property-row">
+                        <span class="property-name">Thickness</span>
+                        <span class="property-value">2,890 km</span>
+                    </div>
+                    <div class="property-row">
+                        <span class="property-name">Composition</span>
+                        <span class="property-value">Silicate rock</span>
+                    </div>
+                    <div class="property-row">
+                        <span class="property-name">Temperature</span>
+                        <span class="property-value">500-4,000°C</span>
+                    </div>
+                    <div class="property-row">
+                        <span class="property-name">Viscosity</span>
+                        <span class="property-value">10²¹ Pa·s</span>
+                    </div>
+                </div>
+
+                <div class="layer-legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--accent-yellow);"></div>
+                        <span>Inner Core</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--accent-orange);"></div>
+                        <span>Outer Core</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #8B4513;"></div>
+                        <span>Lower Mantle</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #654321;"></div>
+                        <span>Upper Mantle</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Core-Mantle Coupling -->
+        <div class="physics-section">
+            <h2 style="color: var(--accent-blue); margin-bottom: 20px;">
+                <span>&#128279;</span> Core-Mantle Coupling Mechanism
+            </h2>
+
+            <div class="coupling-diagram">
+                <div class="coupling-step">
+                    <div class="coupling-icon">&#127757;</div>
+                    <div class="coupling-title">Core Offset</div>
+                    <div class="coupling-desc">Inner core displaced from geometric center by ~1-2 km</div>
+                </div>
+                <div class="coupling-step">
+                    <div class="coupling-icon">&#128200;</div>
+                    <div class="coupling-title">Asymmetric Pressure</div>
+                    <div class="coupling-desc">Gravitational potential creates differential stress on mantle</div>
+                </div>
+                <div class="coupling-step">
+                    <div class="coupling-icon">&#9888;</div>
+                    <div class="coupling-title">Stress Zone</div>
+                    <div class="coupling-desc">Maximum stress accumulates opposite to offset direction</div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 30px; color: var(--text-primary);">Stress Distribution Formula</h3>
+            <div class="formula-box">
+                <div style="font-size: 1.2em;">σ(θ) = σ₀ + A·cos(θ - θ_offset) + B·cos(2(θ - θ_offset))</div>
+            </div>
+
+            <div class="grid-2" style="margin-top: 20px;">
+                <div>
+                    <h4 style="color: var(--accent-blue); margin-bottom: 10px;">Variables</h4>
+                    <ul style="color: var(--text-secondary); margin-left: 20px;">
+                        <li><strong>σ(θ)</strong> - Stress at azimuth θ</li>
+                        <li><strong>σ₀</strong> - Background stress level</li>
+                        <li><strong>A</strong> - Dipole component amplitude</li>
+                        <li><strong>B</strong> - Quadrupole component</li>
+                        <li><strong>θ_offset</strong> - Core offset direction</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 style="color: var(--accent-blue); margin-bottom: 10px;">Physical Interpretation</h4>
+                    <ul style="color: var(--text-secondary); margin-left: 20px;">
+                        <li>Dipole term: Direct gravitational pull from offset mass</li>
+                        <li>Quadrupole term: Tidal deformation of outer core</li>
+                        <li>Maximum stress at θ = θ_offset + 180°</li>
+                        <li>Stress magnitude scales with offset distance</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rotation and Dynamics -->
+        <div class="physics-section">
+            <h2 style="color: var(--accent-blue); margin-bottom: 20px;">
+                <span>&#128260;</span> Differential Rotation
+            </h2>
+
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                The inner core rotates at a slightly different rate than the mantle, completing an extra
+                rotation approximately every 400-1000 years. This differential rotation, combined with
+                position oscillations, creates time-varying stress patterns at the core-mantle boundary.
+            </p>
+
+            <div class="grid-3">
+                <div class="card" style="text-align: center;">
+                    <div style="font-size: 2em; margin-bottom: 10px;">&#128260;</div>
+                    <div style="font-size: 1.5em; font-weight: 700; color: var(--accent-blue);">0.1-0.3°/yr</div>
+                    <div style="color: var(--text-secondary); font-size: 0.9em;">Super-rotation rate</div>
+                </div>
+                <div class="card" style="text-align: center;">
+                    <div style="font-size: 2em; margin-bottom: 10px;">&#128337;</div>
+                    <div style="font-size: 1.5em; font-weight: 700; color: var(--accent-purple);">~70 years</div>
+                    <div style="color: var(--text-secondary); font-size: 0.9em;">Oscillation period</div>
+                </div>
+                <div class="card" style="text-align: center;">
+                    <div style="font-size: 2em; margin-bottom: 10px;">&#127757;</div>
+                    <div style="font-size: 1.5em; font-weight: 700; color: var(--accent-green);">433 days</div>
+                    <div style="color: var(--text-secondary); font-size: 0.9em;">Chandler wobble</div>
+                </div>
+            </div>
+
+            <div class="alert alert-info" style="margin-top: 20px;">
+                <span>&#128300;</span>
+                <div>
+                    <strong>Research Connection:</strong> The Chandler wobble (433-day polar motion) may be
+                    coupled to inner core dynamics. DSO monitors this correlation to improve stress zone predictions.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // Wait for container to have dimensions
+        function initScene() {
+            const container = document.getElementById('core-canvas');
+
+            // Ensure container has dimensions
+            const width = container.clientWidth || 400;
+            const height = container.clientHeight || 350;
+
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0a1a);
+
+            const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
+            camera.position.set(8, 4, 8);
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+
+            const controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.target.set(0, 0, 0);
+
+            // Lighting
+            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+            const light = new THREE.DirectionalLight(0xffffff, 1);
+            light.position.set(10, 10, 10);
+            scene.add(light);
+            const light2 = new THREE.DirectionalLight(0xffffff, 0.5);
+            light2.position.set(-5, -5, -5);
+            scene.add(light2);
+
+            // Earth radius scale: 6371 km = 5 units
+            const SCALE = 5 / 6371;
+            const INNER_CORE_R = 1220 * SCALE;   // ~0.96
+            const OUTER_CORE_R = 3480 * SCALE;   // ~2.73
+            const LOWER_MANTLE_R = 5700 * SCALE; // ~4.47
+            const UPPER_MANTLE_R = 6200 * SCALE; // ~4.87
+            const CRUST_R = 6371 * SCALE;        // 5.0
+
+            const layers = {};
+            const earthGroup = new THREE.Group();
+
+            // ========================================
+            // 2D CROSS-SECTION VIEW (Canvas-based for clarity)
+            // This creates a flat circular cross-section showing all layers
+            // ========================================
+
+            // Create a flat circular cross-section (like cutting Earth in half)
+            function createLayerRing(innerRadius, outerRadius, color) {
+                const geometry = new THREE.RingGeometry(innerRadius, outerRadius, 64);
+                const material = new THREE.MeshBasicMaterial({
+                    color: color,
+                    side: THREE.DoubleSide
+                });
+                return new THREE.Mesh(geometry, material);
+            }
+
+            // Inner Core (center disc) - Yellow
+            const innerCoreGeom = new THREE.CircleGeometry(INNER_CORE_R, 64);
+            const innerCoreMat = new THREE.MeshBasicMaterial({
+                color: 0xf4d03f,
+                side: THREE.DoubleSide
+            });
+            layers.innerCore = new THREE.Mesh(innerCoreGeom, innerCoreMat);
+            layers.innerCore.name = 'innerCore';
+            earthGroup.add(layers.innerCore);
+
+            // Inner core glow
+            const innerGlowGeom = new THREE.CircleGeometry(INNER_CORE_R * 1.1, 64);
+            const innerGlowMat = new THREE.MeshBasicMaterial({
+                color: 0xffcc00,
+                transparent: true,
+                opacity: 0.3,
+                side: THREE.DoubleSide
+            });
+            const innerGlow = new THREE.Mesh(innerGlowGeom, innerGlowMat);
+            innerGlow.position.z = -0.01;
+            earthGroup.add(innerGlow);
+
+            // Outer Core ring - Orange
+            layers.outerCore = createLayerRing(INNER_CORE_R, OUTER_CORE_R, 0xff6600);
+            layers.outerCore.position.z = -0.02;
+            earthGroup.add(layers.outerCore);
+
+            // Lower Mantle ring - Dark Brown/Red
+            layers.lowerMantle = createLayerRing(OUTER_CORE_R, LOWER_MANTLE_R, 0xA0522D);
+            layers.lowerMantle.position.z = -0.03;
+            earthGroup.add(layers.lowerMantle);
+
+            // Upper Mantle ring - Lighter Brown
+            layers.upperMantle = createLayerRing(LOWER_MANTLE_R, UPPER_MANTLE_R, 0x8B7355);
+            layers.upperMantle.position.z = -0.04;
+            earthGroup.add(layers.upperMantle);
+
+            // Crust ring - Blue
+            layers.crust = createLayerRing(UPPER_MANTLE_R, CRUST_R, 0x2874a6);
+            layers.crust.position.z = -0.05;
+            earthGroup.add(layers.crust);
+
+            // ========================================
+            // BOUNDARY CIRCLES (white lines between layers)
+            // ========================================
+            function createBoundaryCircle(radius, color = 0xffffff, opacity = 0.7) {
+                const points = [];
+                for (let i = 0; i <= 64; i++) {
+                    const angle = (i / 64) * Math.PI * 2;
+                    points.push(new THREE.Vector3(
+                        Math.cos(angle) * radius,
+                        Math.sin(angle) * radius,
+                        0.01
+                    ));
+                }
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                const material = new THREE.LineBasicMaterial({
+                    color: color,
+                    transparent: true,
+                    opacity: opacity
+                });
+                return new THREE.Line(geometry, material);
+            }
+
+            earthGroup.add(createBoundaryCircle(INNER_CORE_R));
+            earthGroup.add(createBoundaryCircle(OUTER_CORE_R));
+            earthGroup.add(createBoundaryCircle(LOWER_MANTLE_R, 0xcccccc, 0.5));
+            earthGroup.add(createBoundaryCircle(UPPER_MANTLE_R, 0xcccccc, 0.5));
+            earthGroup.add(createBoundaryCircle(CRUST_R));
+
+            // ========================================
+            // LAYER LABELS
+            // ========================================
+            function createLabel(text, x, y, color, fontSize = 20) {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 256;
+                canvas.height = 64;
+
+                ctx.fillStyle = 'rgba(0,0,0,0.8)';
+                ctx.roundRect(0, 0, 256, 64, 8);
+                ctx.fill();
+
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.roundRect(0, 0, 256, 64, 8);
+                ctx.stroke();
+
+                ctx.fillStyle = color;
+                ctx.font = `bold ${fontSize}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(text, 128, 32);
+
+                const texture = new THREE.CanvasTexture(canvas);
+                const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
+                const sprite = new THREE.Sprite(material);
+                sprite.position.set(x, y, 0.1);
+                sprite.scale.set(2, 0.5, 1);
+                return sprite;
+            }
+
+            // Position labels to the left of the cross-section
+            earthGroup.add(createLabel('Inner Core', -4, 0, '#f4d03f'));
+            earthGroup.add(createLabel('Outer Core', -4, 1.8, '#ff6600'));
+            earthGroup.add(createLabel('Lower Mantle', -4, 3.6, '#cd853f'));
+            earthGroup.add(createLabel('Upper Mantle', -4, 4.8, '#a0826d'));
+            earthGroup.add(createLabel('Crust', -4, 5.5, '#4a90d9'));
+
+            // ========================================
+            // DEPTH LABELS (on right side)
+            // ========================================
+            function createDepthLabel(text, x, y) {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 128;
+                canvas.height = 48;
+
+                ctx.fillStyle = '#888888';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(text, 64, 24);
+
+                const texture = new THREE.CanvasTexture(canvas);
+                const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
+                const sprite = new THREE.Sprite(material);
+                sprite.position.set(x, y, 0.1);
+                sprite.scale.set(1.2, 0.4, 1);
+                return sprite;
+            }
+
+            // Depth markers with lines
+            function createDepthLine(startX, startY, endX, endY) {
+                const points = [
+                    new THREE.Vector3(startX, startY, 0.05),
+                    new THREE.Vector3(endX, endY, 0.05)
+                ];
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                const material = new THREE.LineBasicMaterial({
+                    color: 0x666666,
+                    transparent: true,
+                    opacity: 0.5
+                });
+                return new THREE.Line(geometry, material);
+            }
+
+            // Add depth indicators on right side
+            earthGroup.add(createDepthLabel('0 km', 6.5, CRUST_R));
+            earthGroup.add(createDepthLine(CRUST_R + 0.1, CRUST_R, 6, CRUST_R));
+
+            earthGroup.add(createDepthLabel('2,890 km', 6.5, OUTER_CORE_R));
+            earthGroup.add(createDepthLine(OUTER_CORE_R + 0.1, OUTER_CORE_R, 6, OUTER_CORE_R));
+
+            earthGroup.add(createDepthLabel('5,150 km', 6.5, INNER_CORE_R));
+            earthGroup.add(createDepthLine(INNER_CORE_R + 0.1, INNER_CORE_R, 6, INNER_CORE_R));
+
+            earthGroup.add(createDepthLabel('6,371 km', 6.5, 0));
+            earthGroup.add(createDepthLine(0.1, 0, 6, 0));
+
+            scene.add(earthGroup);
+
+            // ========================================
+            // OFFSET ARROW showing core displacement
+            // ========================================
+            let offsetArrow = null;
+            let offsetLine = null;
+
+            function updateOffsetArrow(offset) {
+                if (offsetArrow) earthGroup.remove(offsetArrow);
+                if (offsetLine) earthGroup.remove(offsetLine);
+
+                if (offset > 0.1) {
+                    const offsetUnits = offset * 0.15;
+
+                    // Arrow
+                    const dir = new THREE.Vector3(1, 0, 0).normalize();
+                    offsetArrow = new THREE.ArrowHelper(
+                        dir,
+                        new THREE.Vector3(0, 0, 0.2),
+                        offsetUnits + 0.5,
+                        0xff3333,
+                        0.2,
+                        0.15
+                    );
+                    earthGroup.add(offsetArrow);
+
+                    // Offset label
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = 128;
+                    canvas.height = 48;
+                    ctx.fillStyle = '#ff3333';
+                    ctx.font = 'bold 18px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(`${offset.toFixed(1)} km`, 64, 24);
+
+                    const texture = new THREE.CanvasTexture(canvas);
+                    const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
+                    offsetLine = new THREE.Sprite(material);
+                    offsetLine.position.set(offsetUnits + 0.8, 0.4, 0.2);
+                    offsetLine.scale.set(1, 0.35, 1);
+                    earthGroup.add(offsetLine);
+                }
+            }
+
+            // Animation
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            // Layer visibility controls
+            document.getElementById('show-crust').addEventListener('change', (e) => {
+                layers.crust.visible = e.target.checked;
+            });
+            document.getElementById('show-mantle').addEventListener('change', (e) => {
+                layers.upperMantle.visible = e.target.checked;
+                layers.lowerMantle.visible = e.target.checked;
+            });
+            document.getElementById('show-outer').addEventListener('change', (e) => {
+                layers.outerCore.visible = e.target.checked;
+            });
+            document.getElementById('show-inner').addEventListener('change', (e) => {
+                layers.innerCore.visible = e.target.checked;
+            });
+
+            // Offset slider control
+            document.getElementById('offset-slider').addEventListener('input', (e) => {
+                const offset = parseFloat(e.target.value);
+                document.getElementById('offset-value').textContent = offset.toFixed(1) + ' km';
+                // Scale offset for visualization
+                const offsetUnits = offset * 0.15;
+                layers.innerCore.position.x = offsetUnits;
+                innerGlow.position.x = offsetUnits;
+                updateOffsetArrow(offset);
+            });
+
+            // Initial offset
+            const initialOffset = 1.2;
+            layers.innerCore.position.x = initialOffset * 0.15;
+            innerGlow.position.x = initialOffset * 0.15;
+            updateOffsetArrow(initialOffset);
+
+            // Resize handler
+            window.addEventListener('resize', () => {
+                const newWidth = container.clientWidth || 400;
+                const newHeight = container.clientHeight || 350;
+                camera.aspect = newWidth / newHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(newWidth, newHeight);
+            });
+        }
+
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initScene);
+        } else {
+            // Small delay to ensure container has dimensions
+            setTimeout(initScene, 100);
+        }
+    </script>
+</body>
+</html>

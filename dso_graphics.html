@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSO - Communication Graphics</title>
+    <link rel="stylesheet" href="shared/styles.css">
+    <script src="shared/nav.js"></script>
+    <style>
+        .graphics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .graphic-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .graphic-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .graphic-preview {
+            height: 200px;
+            background: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .graphic-preview canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .graphic-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 5px;
+        }
+
+        .graphic-tag {
+            background: rgba(10, 10, 26, 0.8);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7em;
+            color: var(--text-secondary);
+        }
+
+        .graphic-info {
+            padding: 15px;
+        }
+
+        .graphic-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .graphic-desc {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .graphic-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .graphic-btn {
+            flex: 1;
+            padding: 8px;
+            font-size: 0.8em;
+            text-align: center;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .graphic-btn.primary {
+            background: var(--accent-blue);
+            color: #fff;
+        }
+
+        .graphic-btn.secondary {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .graphic-btn:hover {
+            opacity: 0.8;
+        }
+
+        .format-options {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .format-btn {
+            padding: 10px 20px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .format-btn.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        .template-section {
+            margin-top: 30px;
+        }
+
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        .template-item {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .template-item:hover {
+            border-color: var(--accent-blue);
+            background: rgba(124, 179, 255, 0.1);
+        }
+
+        .template-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .template-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .template-size {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+        }
+
+        .color-palette {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .color-swatch {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .color-swatch:hover {
+            transform: scale(1.1);
+        }
+
+        .color-swatch.selected {
+            border-color: #fff;
+        }
+
+        .export-panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .export-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .export-option {
+            background: var(--bg-tertiary);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid var(--border-color);
+        }
+
+        .export-option:hover {
+            border-color: var(--accent-blue);
+        }
+
+        .export-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .export-format {
+            font-weight: 600;
+        }
+
+        .export-desc {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        @media (max-width: 1200px) {
+            .graphics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .template-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .graphics-grid {
+                grid-template-columns: 1fr;
+            }
+            .export-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body data-dso-page="graphics">
+    <div class="page-container">
+        <div class="page-header">
+            <h1>&#127912; Communication Graphics</h1>
+            <p class="subtitle">Visualizations and infographics for public communication and reports</p>
+        </div>
+
+        <!-- Format Selection -->
+        <div class="format-options">
+            <button class="format-btn active" onclick="setFormat('social')">Social Media</button>
+            <button class="format-btn" onclick="setFormat('presentation')">Presentations</button>
+            <button class="format-btn" onclick="setFormat('print')">Print/Report</button>
+            <button class="format-btn" onclick="setFormat('web')">Web Embed</button>
+        </div>
+
+        <!-- Graphics Gallery -->
+        <div class="graphics-grid">
+            <!-- Current Status Graphic -->
+            <div class="graphic-card">
+                <div class="graphic-preview">
+                    <canvas id="status-preview"></canvas>
+                    <div class="graphic-overlay">
+                        <span class="graphic-tag">Auto-updated</span>
+                    </div>
+                </div>
+                <div class="graphic-info">
+                    <div class="graphic-title">Current Status Card</div>
+                    <div class="graphic-desc">Real-time DSO status with core position and stress zone</div>
+                    <div class="graphic-actions">
+                        <a class="graphic-btn primary" onclick="downloadGraphic('status')">Download</a>
+                        <a class="graphic-btn secondary" onclick="customizeGraphic('status')">Customize</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Magnitude Forecast Graphic -->
+            <div class="graphic-card">
+                <div class="graphic-preview">
+                    <canvas id="forecast-preview"></canvas>
+                    <div class="graphic-overlay">
+                        <span class="graphic-tag">Forecast</span>
+                    </div>
+                </div>
+                <div class="graphic-info">
+                    <div class="graphic-title">Magnitude Forecast</div>
+                    <div class="graphic-desc">30-day magnitude prediction with confidence intervals</div>
+                    <div class="graphic-actions">
+                        <a class="graphic-btn primary" onclick="downloadGraphic('forecast')">Download</a>
+                        <a class="graphic-btn secondary" onclick="customizeGraphic('forecast')">Customize</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Global Map Graphic -->
+            <div class="graphic-card">
+                <div class="graphic-preview">
+                    <canvas id="map-preview"></canvas>
+                    <div class="graphic-overlay">
+                        <span class="graphic-tag">Interactive</span>
+                    </div>
+                </div>
+                <div class="graphic-info">
+                    <div class="graphic-title">Stress Zone Map</div>
+                    <div class="graphic-desc">Global view with predicted stress zones highlighted</div>
+                    <div class="graphic-actions">
+                        <a class="graphic-btn primary" onclick="downloadGraphic('map')">Download</a>
+                        <a class="graphic-btn secondary" onclick="customizeGraphic('map')">Customize</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Core Position Graphic -->
+            <div class="graphic-card">
+                <div class="graphic-preview">
+                    <canvas id="core-preview"></canvas>
+                    <div class="graphic-overlay">
+                        <span class="graphic-tag">3D Render</span>
+                    </div>
+                </div>
+                <div class="graphic-info">
+                    <div class="graphic-title">Core Position Diagram</div>
+                    <div class="graphic-desc">Earth cross-section showing current core offset</div>
+                    <div class="graphic-actions">
+                        <a class="graphic-btn primary" onclick="downloadGraphic('core')">Download</a>
+                        <a class="graphic-btn secondary" onclick="customizeGraphic('core')">Customize</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Historical Trend Graphic -->
+            <div class="graphic-card">
+                <div class="graphic-preview">
+                    <canvas id="trend-preview"></canvas>
+                    <div class="graphic-overlay">
+                        <span class="graphic-tag">Animated</span>
+                    </div>
+                </div>
+                <div class="graphic-info">
+                    <div class="graphic-title">Activity Trend</div>
+                    <div class="graphic-desc">90-day seismic activity and prediction accuracy</div>
+                    <div class="graphic-actions">
+                        <a class="graphic-btn primary" onclick="downloadGraphic('trend')">Download</a>
+                        <a class="graphic-btn secondary" onclick="customizeGraphic('trend')">Customize</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Uncertainty Graphic -->
+            <div class="graphic-card">
+                <div class="graphic-preview">
+                    <canvas id="uncertainty-preview"></canvas>
+                    <div class="graphic-overlay">
+                        <span class="graphic-tag">Technical</span>
+                    </div>
+                </div>
+                <div class="graphic-info">
+                    <div class="graphic-title">Uncertainty Breakdown</div>
+                    <div class="graphic-desc">Confidence intervals and error source visualization</div>
+                    <div class="graphic-actions">
+                        <a class="graphic-btn primary" onclick="downloadGraphic('uncertainty')">Download</a>
+                        <a class="graphic-btn secondary" onclick="customizeGraphic('uncertainty')">Customize</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Templates Section -->
+        <div class="template-section">
+            <div class="card">
+                <div class="card-header">
+                    <h2><span class="icon">&#128196;</span> Quick Templates</h2>
+                </div>
+                <div class="template-grid">
+                    <div class="template-item" onclick="selectTemplate('twitter')">
+                        <div class="template-icon">&#128038;</div>
+                        <div class="template-name">Twitter/X Post</div>
+                        <div class="template-size">1200 x 675 px</div>
+                    </div>
+                    <div class="template-item" onclick="selectTemplate('instagram')">
+                        <div class="template-icon">&#128247;</div>
+                        <div class="template-name">Instagram Square</div>
+                        <div class="template-size">1080 x 1080 px</div>
+                    </div>
+                    <div class="template-item" onclick="selectTemplate('linkedin')">
+                        <div class="template-icon">&#128188;</div>
+                        <div class="template-name">LinkedIn Article</div>
+                        <div class="template-size">1200 x 627 px</div>
+                    </div>
+                    <div class="template-item" onclick="selectTemplate('slide')">
+                        <div class="template-icon">&#128202;</div>
+                        <div class="template-name">Presentation Slide</div>
+                        <div class="template-size">1920 x 1080 px</div>
+                    </div>
+                    <div class="template-item" onclick="selectTemplate('poster')">
+                        <div class="template-icon">&#128220;</div>
+                        <div class="template-name">Research Poster</div>
+                        <div class="template-size">A0 Portrait</div>
+                    </div>
+                    <div class="template-item" onclick="selectTemplate('report')">
+                        <div class="template-icon">&#128203;</div>
+                        <div class="template-name">Report Figure</div>
+                        <div class="template-size">Letter/A4</div>
+                    </div>
+                    <div class="template-item" onclick="selectTemplate('infographic')">
+                        <div class="template-icon">&#127912;</div>
+                        <div class="template-name">Infographic</div>
+                        <div class="template-size">800 x 2000 px</div>
+                    </div>
+                    <div class="template-item" onclick="selectTemplate('thumbnail')">
+                        <div class="template-icon">&#127909;</div>
+                        <div class="template-name">Video Thumbnail</div>
+                        <div class="template-size">1280 x 720 px</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Brand Colors -->
+        <div class="card">
+            <div class="card-header">
+                <h2><span class="icon">&#127912;</span> DSO Brand Palette</h2>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                <div>
+                    <h4 style="margin-bottom: 10px; color: var(--text-secondary);">Primary Colors</h4>
+                    <div class="color-palette">
+                        <div class="color-swatch selected" style="background: #7cb3ff;" title="Observatory Blue"></div>
+                        <div class="color-swatch" style="background: #f4d03f;" title="Core Yellow"></div>
+                        <div class="color-swatch" style="background: #e67e22;" title="Core Orange"></div>
+                        <div class="color-swatch" style="background: #00ff88;" title="Stress Zone Green"></div>
+                    </div>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 10px; color: var(--text-secondary);">Alert Colors</h4>
+                    <div class="color-palette">
+                        <div class="color-swatch" style="background: #e74c3c;" title="High Alert"></div>
+                        <div class="color-swatch" style="background: #f39c12;" title="Elevated"></div>
+                        <div class="color-swatch" style="background: #4ecdc4;" title="Normal"></div>
+                        <div class="color-swatch" style="background: #9b59b6;" title="Analysis"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Options -->
+        <div class="export-panel">
+            <div class="card-header" style="border: none; margin-bottom: 15px;">
+                <h2><span class="icon">&#128190;</span> Export Options</h2>
+            </div>
+            <div class="export-grid">
+                <div class="export-option" onclick="exportAs('png')">
+                    <div class="export-icon">&#128444;</div>
+                    <div class="export-format">PNG</div>
+                    <div class="export-desc">High quality, transparent background</div>
+                </div>
+                <div class="export-option" onclick="exportAs('svg')">
+                    <div class="export-icon">&#128295;</div>
+                    <div class="export-format">SVG</div>
+                    <div class="export-desc">Vector format, scalable</div>
+                </div>
+                <div class="export-option" onclick="exportAs('pdf')">
+                    <div class="export-icon">&#128196;</div>
+                    <div class="export-format">PDF</div>
+                    <div class="export-desc">Print-ready, CMYK option</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Embed Code Section -->
+        <div class="card">
+            <div class="card-header">
+                <h2><span class="icon">&#128187;</span> Web Embed Code</h2>
+            </div>
+            <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                Copy this code to embed a live DSO status widget on your website:
+            </p>
+            <div class="code-block">
+                <code>&lt;iframe src="https://dso-observatory.org/embed/status-widget"
+  width="400" height="300"
+  style="border: none; border-radius: 12px;"
+  title="DSO Status Widget"&gt;
+&lt;/iframe&gt;</code>
+            </div>
+            <div style="margin-top: 15px; display: flex; gap: 10px;">
+                <button class="btn btn-primary" onclick="copyEmbedCode()">
+                    <span>&#128203;</span> Copy Code
+                </button>
+                <button class="btn btn-secondary" onclick="previewEmbed()">
+                    <span>&#128065;</span> Preview
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Draw preview graphics
+        function drawStatusPreview() {
+            const canvas = document.getElementById('status-preview');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = canvas.offsetWidth * 2;
+            canvas.height = canvas.offsetHeight * 2;
+            ctx.scale(2, 2);
+
+            const w = canvas.offsetWidth;
+            const h = canvas.offsetHeight;
+
+            // Background
+            const gradient = ctx.createLinearGradient(0, 0, w, h);
+            gradient.addColorStop(0, '#1a1a3a');
+            gradient.addColorStop(1, '#0a0a1a');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, w, h);
+
+            // Title
+            ctx.fillStyle = '#7cb3ff';
+            ctx.font = 'bold 16px sans-serif';
+            ctx.fillText('DSO STATUS', 20, 30);
+
+            // Core offset display
+            ctx.fillStyle = '#f4d03f';
+            ctx.font = 'bold 32px sans-serif';
+            ctx.fillText('1.24 km', 20, 80);
+
+            ctx.fillStyle = '#889';
+            ctx.font = '12px sans-serif';
+            ctx.fillText('Core Offset', 20, 100);
+
+            // Stress zone
+            ctx.fillStyle = '#00ff88';
+            ctx.font = 'bold 18px sans-serif';
+            ctx.fillText('W. Pacific', 20, 140);
+
+            ctx.fillStyle = '#889';
+            ctx.font = '12px sans-serif';
+            ctx.fillText('Stress Zone', 20, 160);
+
+            // Mini globe placeholder
+            ctx.beginPath();
+            ctx.arc(w - 60, h / 2, 40, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(124, 179, 255, 0.2)';
+            ctx.fill();
+            ctx.strokeStyle = '#7cb3ff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        function drawForecastPreview() {
+            const canvas = document.getElementById('forecast-preview');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = canvas.offsetWidth * 2;
+            canvas.height = canvas.offsetHeight * 2;
+            ctx.scale(2, 2);
+
+            const w = canvas.offsetWidth;
+            const h = canvas.offsetHeight;
+
+            // Background
+            ctx.fillStyle = '#141428';
+            ctx.fillRect(0, 0, w, h);
+
+            // Draw magnitude scale
+            ctx.fillStyle = '#889';
+            ctx.font = '10px sans-serif';
+            for (let m = 5; m <= 8; m++) {
+                const y = h - 30 - ((m - 5) / 3) * (h - 60);
+                ctx.fillText(`M${m}`, 10, y);
+            }
+
+            // Draw confidence interval
+            ctx.fillStyle = 'rgba(124, 179, 255, 0.2)';
+            ctx.beginPath();
+            ctx.rect(40, 50, w - 60, 80);
+            ctx.fill();
+
+            // Draw expected value line
+            ctx.strokeStyle = '#f4d03f';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(40, 90);
+            ctx.lineTo(w - 20, 90);
+            ctx.stroke();
+
+            // Label
+            ctx.fillStyle = '#f4d03f';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.fillText('M6.8 Expected', w - 100, 85);
+        }
+
+        function drawMapPreview() {
+            const canvas = document.getElementById('map-preview');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = canvas.offsetWidth * 2;
+            canvas.height = canvas.offsetHeight * 2;
+            ctx.scale(2, 2);
+
+            const w = canvas.offsetWidth;
+            const h = canvas.offsetHeight;
+
+            // Ocean background
+            ctx.fillStyle = '#0d1a2a';
+            ctx.fillRect(0, 0, w, h);
+
+            // Simple continent shapes
+            ctx.fillStyle = '#1a3a2a';
+            // Asia/Pacific region
+            ctx.beginPath();
+            ctx.ellipse(w * 0.7, h * 0.4, 50, 40, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Stress zone marker
+            ctx.beginPath();
+            ctx.arc(w * 0.75, h * 0.5, 15, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 255, 136, 0.3)';
+            ctx.fill();
+            ctx.strokeStyle = '#00ff88';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // X marker
+            ctx.strokeStyle = '#e74c3c';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(w * 0.75 - 8, h * 0.5 - 8);
+            ctx.lineTo(w * 0.75 + 8, h * 0.5 + 8);
+            ctx.moveTo(w * 0.75 + 8, h * 0.5 - 8);
+            ctx.lineTo(w * 0.75 - 8, h * 0.5 + 8);
+            ctx.stroke();
+        }
+
+        function drawCorePreview() {
+            const canvas = document.getElementById('core-preview');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = canvas.offsetWidth * 2;
+            canvas.height = canvas.offsetHeight * 2;
+            ctx.scale(2, 2);
+
+            const w = canvas.offsetWidth;
+            const h = canvas.offsetHeight;
+            const centerX = w / 2;
+            const centerY = h / 2;
+
+            // Background
+            ctx.fillStyle = '#0a0a1a';
+            ctx.fillRect(0, 0, w, h);
+
+            // Outer layers
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 70, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(139, 69, 19, 0.3)';
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 50, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 102, 0, 0.4)';
+            ctx.fill();
+
+            // Inner core (offset)
+            ctx.beginPath();
+            ctx.arc(centerX + 10, centerY + 5, 25, 0, Math.PI * 2);
+            ctx.fillStyle = '#f4d03f';
+            ctx.fill();
+
+            // Core glow
+            const glow = ctx.createRadialGradient(centerX + 10, centerY + 5, 0, centerX + 10, centerY + 5, 35);
+            glow.addColorStop(0, 'rgba(244, 208, 63, 0.5)');
+            glow.addColorStop(1, 'transparent');
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(centerX + 10, centerY + 5, 35, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Labels
+            ctx.fillStyle = '#889';
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Cross-section view', centerX, h - 15);
+        }
+
+        function drawTrendPreview() {
+            const canvas = document.getElementById('trend-preview');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = canvas.offsetWidth * 2;
+            canvas.height = canvas.offsetHeight * 2;
+            ctx.scale(2, 2);
+
+            const w = canvas.offsetWidth;
+            const h = canvas.offsetHeight;
+
+            ctx.fillStyle = '#141428';
+            ctx.fillRect(0, 0, w, h);
+
+            // Draw trend line
+            ctx.strokeStyle = '#7cb3ff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            for (let i = 0; i < w - 40; i++) {
+                const x = 20 + i;
+                const y = h / 2 + Math.sin(i * 0.05) * 30 + Math.sin(i * 0.02) * 20;
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.stroke();
+
+            // Events markers
+            ctx.fillStyle = '#e74c3c';
+            [50, 120, 180].forEach(x => {
+                ctx.beginPath();
+                ctx.arc(20 + x, h / 2 + Math.sin(x * 0.05) * 30 + Math.sin(x * 0.02) * 20 - 10, 5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function drawUncertaintyPreview() {
+            const canvas = document.getElementById('uncertainty-preview');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = canvas.offsetWidth * 2;
+            canvas.height = canvas.offsetHeight * 2;
+            ctx.scale(2, 2);
+
+            const w = canvas.offsetWidth;
+            const h = canvas.offsetHeight;
+
+            ctx.fillStyle = '#141428';
+            ctx.fillRect(0, 0, w, h);
+
+            // Draw bars
+            const sources = [
+                { label: 'Data', value: 0.25, color: '#4ecdc4' },
+                { label: 'Model', value: 0.45, color: '#f4d03f' },
+                { label: 'Core', value: 0.38, color: '#7cb3ff' },
+                { label: 'Time', value: 0.65, color: '#e74c3c' }
+            ];
+
+            sources.forEach((src, i) => {
+                const y = 30 + i * 40;
+
+                ctx.fillStyle = '#889';
+                ctx.font = '11px sans-serif';
+                ctx.fillText(src.label, 15, y + 5);
+
+                ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                ctx.fillRect(70, y - 8, w - 90, 16);
+
+                ctx.fillStyle = src.color;
+                ctx.fillRect(70, y - 8, (w - 90) * src.value, 16);
+            });
+        }
+
+        // Initialize previews
+        window.addEventListener('load', () => {
+            drawStatusPreview();
+            drawForecastPreview();
+            drawMapPreview();
+            drawCorePreview();
+            drawTrendPreview();
+            drawUncertaintyPreview();
+        });
+
+        window.addEventListener('resize', () => {
+            drawStatusPreview();
+            drawForecastPreview();
+            drawMapPreview();
+            drawCorePreview();
+            drawTrendPreview();
+            drawUncertaintyPreview();
+        });
+
+        // Interaction functions
+        function setFormat(format) {
+            document.querySelectorAll('.format-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            console.log(`Format set to: ${format}`);
+        }
+
+        function downloadGraphic(type) {
+            console.log(`Downloading graphic: ${type}`);
+            alert(`Downloading ${type} graphic...`);
+        }
+
+        function customizeGraphic(type) {
+            console.log(`Customizing graphic: ${type}`);
+            alert(`Opening customization for ${type}...`);
+        }
+
+        function selectTemplate(template) {
+            console.log(`Selected template: ${template}`);
+            alert(`Loading ${template} template...`);
+        }
+
+        function exportAs(format) {
+            console.log(`Exporting as: ${format}`);
+            alert(`Exporting as ${format}...`);
+        }
+
+        function copyEmbedCode() {
+            navigator.clipboard.writeText(`<iframe src="https://dso-observatory.org/embed/status-widget" width="400" height="300" style="border: none; border-radius: 12px;" title="DSO Status Widget"></iframe>`);
+            alert('Embed code copied to clipboard!');
+        }
+
+        function previewEmbed() {
+            alert('Preview functionality would open a modal with the embedded widget preview.');
+        }
+    </script>
+</body>
+</html>

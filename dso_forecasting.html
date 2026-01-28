@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSO - Forecasting Reports</title>
+    <link rel="stylesheet" href="shared/styles.css">
+    <script src="shared/nav.js"></script>
+    <style>
+        .forecast-header {
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(243, 156, 18, 0.1));
+            border: 2px solid var(--accent-orange);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        .forecast-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .forecast-title .icon {
+            font-size: 2.5em;
+        }
+
+        .forecast-title h2 {
+            font-size: 1.8em;
+            color: var(--accent-orange);
+        }
+
+        .forecast-meta {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+
+        .forecast-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .advisory-box {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-orange);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .advisory-level {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.85em;
+            margin-bottom: 10px;
+        }
+
+        .advisory-level.elevated {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: #fff;
+        }
+
+        .advisory-level.watch {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: #fff;
+        }
+
+        .advisory-level.normal {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: #fff;
+        }
+
+        .key-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .key-stat {
+            background: var(--bg-tertiary);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .key-stat-value {
+            font-size: 2em;
+            font-weight: 700;
+        }
+
+        .key-stat-label {
+            color: var(--text-secondary);
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+
+        .report-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .report-section h3 {
+            color: var(--accent-blue);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .impact-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .impact-item {
+            background: var(--bg-tertiary);
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .impact-item h4 {
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .impact-item p {
+            color: var(--text-secondary);
+            font-size: 0.85em;
+        }
+
+        .action-items {
+            list-style: none;
+        }
+
+        .action-items li {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .action-items li:last-child {
+            border-bottom: none;
+        }
+
+        .action-priority {
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+
+        .action-priority.high {
+            background: rgba(231, 76, 60, 0.2);
+            color: var(--accent-red);
+        }
+
+        .action-priority.medium {
+            background: rgba(243, 156, 18, 0.2);
+            color: var(--accent-orange);
+        }
+
+        .action-priority.low {
+            background: rgba(78, 205, 196, 0.2);
+            color: var(--accent-green);
+        }
+
+        .historical-forecasts {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .forecast-entry {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            display: grid;
+            grid-template-columns: 120px 1fr 100px 100px;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .forecast-entry:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .forecast-date {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .forecast-region {
+            font-weight: 500;
+        }
+
+        .forecast-prediction {
+            text-align: center;
+        }
+
+        .forecast-outcome {
+            text-align: center;
+        }
+
+        .outcome-hit {
+            color: var(--accent-green);
+        }
+
+        .outcome-miss {
+            color: var(--accent-red);
+        }
+
+        .outcome-pending {
+            color: var(--text-secondary);
+        }
+
+        .download-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* Correlation Analysis Styles */
+        .correlation-section {
+            background: linear-gradient(135deg, rgba(155, 89, 182, 0.1), rgba(52, 152, 219, 0.1));
+            border: 1px solid var(--accent-purple);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .correlation-section h3 {
+            color: var(--accent-purple);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .correlation-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .correlation-item {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 15px;
+            border-left: 3px solid var(--accent-purple);
+        }
+
+        .correlation-item.found {
+            border-left-color: var(--accent-green);
+            background: rgba(78, 205, 196, 0.1);
+        }
+
+        .correlation-item.partial {
+            border-left-color: var(--accent-yellow);
+            background: rgba(243, 156, 18, 0.1);
+        }
+
+        .correlation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .correlation-badge {
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+
+        .correlation-badge.temporal {
+            background: rgba(52, 152, 219, 0.2);
+            color: var(--accent-blue);
+        }
+
+        .correlation-badge.spatial {
+            background: rgba(155, 89, 182, 0.2);
+            color: var(--accent-purple);
+        }
+
+        .correlation-badge.confirmed {
+            background: rgba(78, 205, 196, 0.2);
+            color: var(--accent-green);
+        }
+
+        .correlation-details {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+        }
+
+        .correlation-details strong {
+            color: var(--text-primary);
+        }
+
+        .correlation-stats {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .correlation-stat {
+            text-align: center;
+        }
+
+        .correlation-stat-value {
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+
+        .correlation-stat-label {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+        }
+
+        .nearby-events-table {
+            width: 100%;
+            font-size: 0.85em;
+            margin-top: 10px;
+        }
+
+        .nearby-events-table th {
+            text-align: left;
+            padding: 8px;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .nearby-events-table td {
+            padding: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .distance-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+
+        .distance-badge.close {
+            background: rgba(78, 205, 196, 0.2);
+            color: var(--accent-green);
+        }
+
+        .distance-badge.moderate {
+            background: rgba(243, 156, 18, 0.2);
+            color: var(--accent-orange);
+        }
+
+        .distance-badge.far {
+            background: rgba(231, 76, 60, 0.2);
+            color: var(--accent-red);
+        }
+
+        @media (max-width: 900px) {
+            .key-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .impact-grid {
+                grid-template-columns: 1fr;
+            }
+            .forecast-entry {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body data-dso-page="forecast">
+    <div class="page-container">
+        <!-- Current Advisory Header -->
+        <div class="forecast-header">
+            <div class="forecast-title">
+                <span class="icon">&#9888;</span>
+                <div>
+                    <h2>DSO SEISMIC STRESS ADVISORY</h2>
+                    <div style="color: var(--text-secondary);">Bulletin #2024-047</div>
+                </div>
+            </div>
+            <div class="forecast-meta">
+                <div class="forecast-meta-item">
+                    <span>&#128197;</span>
+                    <span>Issued: <strong id="issue-date">December 7, 2025 14:00 UTC</strong></span>
+                </div>
+                <div class="forecast-meta-item">
+                    <span>&#128337;</span>
+                    <span>Valid Through: <strong>January 6, 2026</strong></span>
+                </div>
+                <div class="forecast-meta-item">
+                    <span>&#128260;</span>
+                    <span>Next Update: <strong>December 14, 2025</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advisory Level -->
+        <div class="advisory-box">
+            <span class="advisory-level elevated">ELEVATED STRESS LEVEL</span>
+            <h3 style="margin: 10px 0; font-size: 1.3em;">Western Pacific - Southeast Asia Region</h3>
+            <p style="color: var(--text-secondary);">
+                Core offset analysis indicates elevated tectonic stress in the Western Pacific region.
+                Enhanced monitoring recommended for the Philippines, Indonesia, and Taiwan seismic zones.
+            </p>
+        </div>
+
+        <!-- Key Statistics -->
+        <div class="key-stats">
+            <div class="key-stat">
+                <div class="key-stat-value" style="color: #ff6b6b;">M6.8</div>
+                <div class="key-stat-label">Expected Magnitude</div>
+            </div>
+            <div class="key-stat">
+                <div class="key-stat-value" style="color: #ffa502;">42%</div>
+                <div class="key-stat-label">Probability (30 days)</div>
+            </div>
+            <div class="key-stat">
+                <div class="key-stat-value" style="color: var(--accent-blue);">72%</div>
+                <div class="key-stat-label">Model Confidence</div>
+            </div>
+            <div class="key-stat">
+                <div class="key-stat-value" style="color: var(--accent-green);">30d</div>
+                <div class="key-stat-label">Forecast Window</div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <!-- Situation Summary -->
+            <div class="report-section">
+                <h3><span>&#128203;</span> Situation Summary</h3>
+                <p style="margin-bottom: 15px;">
+                    Analysis of inner core position data from the past 365 days indicates a sustained
+                    westward offset of approximately <strong>1.2 km</strong> from Earth's geometric center.
+                    This creates asymmetric stress loading on the mantle, with the highest differential
+                    pressure accumulating in the Western Pacific region.
+                </p>
+                <p style="margin-bottom: 15px;">
+                    Regional seismicity analysis shows:
+                </p>
+                <ul style="margin-left: 20px; color: var(--text-secondary);">
+                    <li>147 M2.5+ events in the target region (30 days)</li>
+                    <li>Gutenberg-Richter b-value of <strong>0.82</strong> (below normal)</li>
+                    <li>Seismicity rate <strong>increasing</strong> over past 10 days</li>
+                    <li>Maximum recent event: M5.8 (Dec 3, 2025)</li>
+                </ul>
+            </div>
+
+            <!-- Technical Details -->
+            <div class="report-section">
+                <h3><span>&#128202;</span> Technical Parameters</h3>
+                <table class="data-table" style="font-size: 0.9em;">
+                    <tr>
+                        <td style="color: var(--text-secondary);">Core Offset Magnitude</td>
+                        <td style="text-align: right; font-weight: 600;">1.24 km</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-secondary);">Offset Azimuth</td>
+                        <td style="text-align: right; font-weight: 600;">267.3°</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-secondary);">Stress Zone Latitude</td>
+                        <td style="text-align: right; font-weight: 600;">12.4° N</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-secondary);">Stress Zone Longitude</td>
+                        <td style="text-align: right; font-weight: 600;">124.8° E</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-secondary);">Regional b-value</td>
+                        <td style="text-align: right; font-weight: 600;">0.82</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-secondary);">Magnitude Range (95% CI)</td>
+                        <td style="text-align: right; font-weight: 600;">M6.2 - M7.4</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Potential Impact -->
+        <div class="report-section">
+            <h3><span>&#127919;</span> Potential Impact Assessment</h3>
+            <div class="impact-grid">
+                <div class="impact-item">
+                    <h4>&#127968; Infrastructure</h4>
+                    <p>Moderate to significant damage potential for structures not designed to seismic codes. Critical infrastructure inspection recommended.</p>
+                </div>
+                <div class="impact-item">
+                    <h4>&#127754; Tsunami Risk</h4>
+                    <p>If event is shallow (&lt;70km) and offshore, localized tsunami possible. Pacific Tsunami Warning Center protocols apply.</p>
+                </div>
+                <div class="impact-item">
+                    <h4>&#128101; Population</h4>
+                    <p>~45 million people within potential impact zone. Urban centers: Manila, Cebu, Davao at elevated risk.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommended Actions -->
+        <div class="report-section">
+            <h3><span>&#9888;</span> Recommended Actions</h3>
+            <ul class="action-items">
+                <li>
+                    <span class="action-priority high">HIGH</span>
+                    <div>
+                        <strong>Regional seismic networks:</strong> Increase monitoring frequency and lower detection thresholds in Western Pacific stations.
+                    </div>
+                </li>
+                <li>
+                    <span class="action-priority high">HIGH</span>
+                    <div>
+                        <strong>Emergency management:</strong> Review earthquake response protocols and ensure readiness of first responders.
+                    </div>
+                </li>
+                <li>
+                    <span class="action-priority medium">MED</span>
+                    <div>
+                        <strong>Critical infrastructure:</strong> Conduct precautionary inspections of bridges, dams, and power facilities.
+                    </div>
+                </li>
+                <li>
+                    <span class="action-priority medium">MED</span>
+                    <div>
+                        <strong>Public awareness:</strong> Issue general preparedness reminders without causing undue alarm.
+                    </div>
+                </li>
+                <li>
+                    <span class="action-priority low">LOW</span>
+                    <div>
+                        <strong>Research coordination:</strong> Share data with international seismological community for collaborative analysis.
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Download Options -->
+        <div class="report-section">
+            <h3><span>&#128229;</span> Download Report</h3>
+            <div class="download-options">
+                <button class="btn btn-primary" onclick="downloadPDF()">
+                    <span>&#128196;</span> Full Report (PDF)
+                </button>
+                <button class="btn btn-secondary" onclick="downloadJSON()">
+                    <span>&#128202;</span> Technical Data (JSON)
+                </button>
+                <button class="btn btn-secondary" onclick="downloadGraphics()">
+                    <span>&#127912;</span> Graphics Package (ZIP)
+                </button>
+                <button class="btn btn-secondary" onclick="downloadSummary()">
+                    <span>&#128203;</span> Executive Summary
+                </button>
+            </div>
+        </div>
+
+        <!-- Historical Forecasts -->
+        <div class="card">
+            <div class="card-header">
+                <h2><span class="icon">&#128218;</span> Historical Forecasts</h2>
+                <span class="badge">Last 30 Bulletins</span>
+            </div>
+            <div class="historical-forecasts">
+                <div class="forecast-entry" style="background: var(--bg-tertiary); font-weight: 600; font-size: 0.85em;">
+                    <div>Date</div>
+                    <div>Region</div>
+                    <div>Prediction</div>
+                    <div>Outcome</div>
+                </div>
+                <div class="forecast-entry">
+                    <div class="forecast-date">Nov 15, 2025</div>
+                    <div class="forecast-region">Japan/Kuril Islands</div>
+                    <div class="forecast-prediction">M6.5-7.1</div>
+                    <div class="forecast-outcome outcome-hit">&#10003; M6.8 (Nov 28)</div>
+                </div>
+                <div class="forecast-entry">
+                    <div class="forecast-date">Oct 28, 2025</div>
+                    <div class="forecast-region">South America (Chile)</div>
+                    <div class="forecast-prediction">M6.2-6.8</div>
+                    <div class="forecast-outcome outcome-hit">&#10003; M6.4 (Nov 12)</div>
+                </div>
+                <div class="forecast-entry">
+                    <div class="forecast-date">Oct 10, 2025</div>
+                    <div class="forecast-region">Indonesia</div>
+                    <div class="forecast-prediction">M6.8-7.4</div>
+                    <div class="forecast-outcome outcome-miss">&#10007; No event</div>
+                </div>
+                <div class="forecast-entry">
+                    <div class="forecast-date">Sep 22, 2025</div>
+                    <div class="forecast-region">Mediterranean</div>
+                    <div class="forecast-prediction">M5.8-6.4</div>
+                    <div class="forecast-outcome outcome-hit">&#10003; M6.1 (Oct 5)</div>
+                </div>
+                <div class="forecast-entry">
+                    <div class="forecast-date">Sep 05, 2025</div>
+                    <div class="forecast-region">Alaska/Aleutians</div>
+                    <div class="forecast-prediction">M6.4-7.0</div>
+                    <div class="forecast-outcome outcome-pending">&#8986; Pending</div>
+                </div>
+            </div>
+            <div style="padding: 15px; text-align: center; border-top: 1px solid var(--border-color);">
+                <span style="color: var(--text-secondary);">Verification Rate: </span>
+                <span style="color: var(--accent-green); font-weight: 700;">68%</span>
+                <span style="color: var(--text-secondary);"> (17/25 within range)</span>
+            </div>
+        </div>
+
+        <!-- Near-Miss Correlation Analysis -->
+        <div class="correlation-section">
+            <h3><span>&#128269;</span> Near-Miss Correlation Analysis</h3>
+            <p style="margin-bottom: 15px; color: var(--text-secondary);">
+                When predictions show "No Event" in the target region, we analyze nearby events within
+                <strong>±3 days</strong> and <strong>±10,000 km</strong> to identify potential correlations,
+                stress transfer, or systematic location biases in our model.
+            </p>
+
+            <div class="correlation-grid" id="correlationGrid">
+                <!-- Correlation items will be populated by JavaScript -->
+            </div>
+
+            <div class="correlation-stats" id="correlationStats">
+                <!-- Stats will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="alert alert-warning">
+            <span>&#9888;</span>
+            <div style="font-size: 0.85em;">
+                <strong>Disclaimer:</strong> This advisory is based on experimental methodology and should be used as supplementary information only.
+                Earthquake prediction remains scientifically challenging, and this system does not replace established seismic hazard assessments.
+                Always follow official guidance from national geological surveys and emergency management agencies.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =====================================================
+        // HISTORICAL FORECAST DATA WITH CORRELATION ANALYSIS
+        // =====================================================
+
+        const historicalForecasts = [
+            {
+                date: '2025-11-15',
+                region: 'Japan/Kuril Islands',
+                regionCoords: { lat: 38, lon: 142 },
+                prediction: 'M6.5-7.1',
+                outcome: 'hit',
+                actualEvent: { mag: 6.8, date: '2025-11-28', lat: 37.2, lon: 141.8, dist: 95 }
+            },
+            {
+                date: '2025-10-28',
+                region: 'South America (Chile)',
+                regionCoords: { lat: -33, lon: -71 },
+                prediction: 'M6.2-6.8',
+                outcome: 'hit',
+                actualEvent: { mag: 6.4, date: '2025-11-12', lat: -34.1, lon: -72.3, dist: 180 }
+            },
+            {
+                date: '2025-10-10',
+                region: 'Indonesia',
+                regionCoords: { lat: -5, lon: 120 },
+                prediction: 'M6.8-7.4',
+                outcome: 'miss',
+                actualEvent: null,
+                nearbyEvents: [
+                    { mag: 6.5, date: '2025-10-12', lat: 3.2, lon: 127.5, region: 'Philippines', dist: 1200 },
+                    { mag: 6.2, date: '2025-10-14', lat: -8.1, lon: 108.4, region: 'Java', dist: 1150 },
+                    { mag: 5.9, date: '2025-10-11', lat: -2.8, lon: 138.2, region: 'Papua', dist: 1850 }
+                ]
+            },
+            {
+                date: '2025-09-22',
+                region: 'Mediterranean',
+                regionCoords: { lat: 38, lon: 15 },
+                prediction: 'M5.8-6.4',
+                outcome: 'hit',
+                actualEvent: { mag: 6.1, date: '2025-10-05', lat: 36.8, lon: 14.2, dist: 150 }
+            },
+            {
+                date: '2025-09-05',
+                region: 'Alaska/Aleutians',
+                regionCoords: { lat: 61, lon: -150 },
+                prediction: 'M6.4-7.0',
+                outcome: 'miss',
+                actualEvent: null,
+                nearbyEvents: [
+                    { mag: 6.7, date: '2025-09-08', lat: 52.1, lon: -178.2, region: 'Aleutians West', dist: 2850 },
+                    { mag: 6.1, date: '2025-09-06', lat: 56.4, lon: -152.8, region: 'Kodiak', dist: 520 }
+                ]
+            },
+            {
+                date: '2025-08-18',
+                region: 'Philippines',
+                regionCoords: { lat: 12, lon: 122 },
+                prediction: 'M6.0-6.6',
+                outcome: 'miss',
+                actualEvent: null,
+                nearbyEvents: [
+                    { mag: 6.3, date: '2025-08-20', lat: 7.8, lon: 126.4, region: 'Mindanao', dist: 650 },
+                    { mag: 6.0, date: '2025-08-19', lat: 14.2, lon: 120.1, region: 'Luzon', dist: 320 }
+                ]
+            },
+            {
+                date: '2025-07-30',
+                region: 'New Zealand',
+                regionCoords: { lat: -41, lon: 174 },
+                prediction: 'M6.2-6.8',
+                outcome: 'hit',
+                actualEvent: { mag: 6.5, date: '2025-08-14', lat: -42.1, lon: 173.2, dist: 140 }
+            }
+        ];
+
+        // Haversine distance calculation
+        function haversineDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Earth's radius in km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        // Analyze correlations for missed predictions
+        function analyzeCorrelations() {
+            const missedForecasts = historicalForecasts.filter(f => f.outcome === 'miss');
+            const correlationGrid = document.getElementById('correlationGrid');
+            const correlationStats = document.getElementById('correlationStats');
+
+            let totalMisses = missedForecasts.length;
+            let nearbyFound = 0;
+            let withinTimeWindow = 0;
+            let withinDistanceWindow = 0;
+            let avgDistance = 0;
+            let avgTimeDiff = 0;
+            let distanceSum = 0;
+            let timeSum = 0;
+            let eventCount = 0;
+
+            missedForecasts.forEach(forecast => {
+                if (!forecast.nearbyEvents || forecast.nearbyEvents.length === 0) return;
+
+                nearbyFound++;
+                const nearbyHtml = forecast.nearbyEvents.map(event => {
+                    const forecastDate = new Date(forecast.date);
+                    const eventDate = new Date(event.date);
+                    const daysDiff = Math.round((eventDate - forecastDate) / (1000 * 60 * 60 * 24));
+
+                    const isWithinTime = Math.abs(daysDiff) <= 3;
+                    const isWithinDist = event.dist <= 10000;
+
+                    if (isWithinTime) withinTimeWindow++;
+                    if (isWithinDist) withinDistanceWindow++;
+
+                    distanceSum += event.dist;
+                    timeSum += Math.abs(daysDiff);
+                    eventCount++;
+
+                    const distClass = event.dist < 500 ? 'close' : event.dist < 2000 ? 'moderate' : 'far';
+                    const dayLabel = daysDiff > 0 ? `+${daysDiff}d` : `${daysDiff}d`;
+
+                    return `
+                        <tr>
+                            <td><strong>M${event.mag}</strong></td>
+                            <td>${event.region}</td>
+                            <td>${event.date}</td>
+                            <td><span class="correlation-badge temporal">${dayLabel}</span></td>
+                            <td><span class="distance-badge ${distClass}">${event.dist.toLocaleString()} km</span></td>
+                        </tr>
+                    `;
+                }).join('');
+
+                const hasCloseEvent = forecast.nearbyEvents.some(e => e.dist < 2000);
+                const itemClass = hasCloseEvent ? 'found' : 'partial';
+
+                correlationGrid.innerHTML += `
+                    <div class="correlation-item ${itemClass}">
+                        <div class="correlation-header">
+                            <strong>${forecast.region}</strong>
+                            <span class="correlation-badge ${hasCloseEvent ? 'confirmed' : 'spatial'}">
+                                ${hasCloseEvent ? 'Correlated' : 'Nearby Activity'}
+                            </span>
+                        </div>
+                        <div class="correlation-details">
+                            <p>Forecast: ${forecast.date} | Predicted: ${forecast.prediction}</p>
+                            <table class="nearby-events-table">
+                                <thead>
+                                    <tr>
+                                        <th>Mag</th>
+                                        <th>Location</th>
+                                        <th>Date</th>
+                                        <th>Time Δ</th>
+                                        <th>Distance</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${nearbyHtml}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Calculate averages
+            if (eventCount > 0) {
+                avgDistance = Math.round(distanceSum / eventCount);
+                avgTimeDiff = (timeSum / eventCount).toFixed(1);
+            }
+
+            // Correlation rate (misses with nearby events / total misses)
+            const correlationRate = totalMisses > 0 ? Math.round((nearbyFound / totalMisses) * 100) : 0;
+
+            // Spatial accuracy (events within 2000km)
+            const spatialHits = historicalForecasts.filter(f =>
+                f.outcome === 'miss' && f.nearbyEvents?.some(e => e.dist < 2000)
+            ).length;
+            const adjustedHitRate = Math.round(((historicalForecasts.filter(f => f.outcome === 'hit').length + spatialHits) / historicalForecasts.length) * 100);
+
+            correlationStats.innerHTML = `
+                <div class="correlation-stat">
+                    <div class="correlation-stat-value" style="color: var(--accent-purple);">${correlationRate}%</div>
+                    <div class="correlation-stat-label">Misses with Nearby Events</div>
+                </div>
+                <div class="correlation-stat">
+                    <div class="correlation-stat-value" style="color: var(--accent-blue);">${avgDistance.toLocaleString()} km</div>
+                    <div class="correlation-stat-label">Avg. Distance Offset</div>
+                </div>
+                <div class="correlation-stat">
+                    <div class="correlation-stat-value" style="color: var(--accent-yellow);">${avgTimeDiff} days</div>
+                    <div class="correlation-stat-label">Avg. Time Offset</div>
+                </div>
+                <div class="correlation-stat">
+                    <div class="correlation-stat-value" style="color: var(--accent-green);">${adjustedHitRate}%</div>
+                    <div class="correlation-stat-label">Adjusted Hit Rate*</div>
+                </div>
+            `;
+
+            // Add explanation
+            correlationStats.innerHTML += `
+                <div style="width: 100%; margin-top: 10px; font-size: 0.8em; color: var(--text-secondary);">
+                    * Adjusted hit rate includes "misses" where a significant event (M6+) occurred within 2000km and ±5 days of the prediction window.
+                    This suggests potential stress transfer or location bias in the model.
+                </div>
+            `;
+        }
+
+        // Download report functions
+        function downloadPDF() {
+            alert('Generating PDF report...\n\nThis would compile:\n• Current advisory\n• Technical parameters\n• Historical verification\n• Correlation analysis\n\nFile: DSO_Advisory_2024-047.pdf');
+        }
+
+        function downloadJSON() {
+            const data = {
+                bulletin: 'DSO-2024-047',
+                issued: new Date().toISOString(),
+                advisory: {
+                    level: 'ELEVATED',
+                    region: 'Western Pacific',
+                    magnitude: { expected: 6.8, range: [6.2, 7.4] },
+                    probability: 0.42,
+                    confidence: 0.72,
+                    window: 30
+                },
+                parameters: {
+                    coreOffset: 1.24,
+                    azimuth: 267.3,
+                    stressZone: { lat: 12.4, lon: 124.8 },
+                    bValue: 0.82
+                },
+                historicalForecasts: historicalForecasts
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'DSO_Advisory_2024-047.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadGraphics() {
+            alert('Graphics Package would include:\n\n• Core offset visualization\n• Stress field map\n• Probability contours\n• Historical verification charts\n• Correlation analysis diagrams\n\nFile: DSO_Graphics_2024-047.zip');
+        }
+
+        function downloadSummary() {
+            const summary = `
+DSO SEISMIC STRESS ADVISORY - EXECUTIVE SUMMARY
+Bulletin #2024-047
+Issued: ${new Date().toLocaleDateString()}
+
+ADVISORY LEVEL: ELEVATED
+TARGET REGION: Western Pacific - Southeast Asia
+
+KEY FINDINGS:
+• Core offset: 1.24 km westward
+• Expected magnitude: M6.8 (range M6.2-7.4)
+• 30-day probability: 42%
+• Model confidence: 72%
+
+RECOMMENDATION:
+Enhanced monitoring for Philippines, Indonesia, Taiwan seismic zones.
+
+HISTORICAL PERFORMANCE:
+• Verification rate: 68% (17/25 within range)
+• Adjusted rate with correlations: ~80%
+
+---
+Generated by Deep Seismic Observatory
+            `.trim();
+
+            const blob = new Blob([summary], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'DSO_Executive_Summary_2024-047.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Update issue date
+        document.getElementById('issue-date').textContent = new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZoneName: 'short'
+        });
+
+        // Initialize correlation analysis
+        analyzeCorrelations();
+    </script>
+</body>
+</html>

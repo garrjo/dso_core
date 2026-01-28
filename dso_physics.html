@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSO - Physical Basis</title>
+    <link rel="stylesheet" href="shared/styles.css">
+    <script src="shared/nav.js"></script>
+    <style>
+        .physics-intro {
+            background: linear-gradient(135deg, rgba(124, 179, 255, 0.1), rgba(155, 89, 182, 0.1));
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .physics-intro h2 {
+            color: var(--accent-blue);
+            margin-bottom: 15px;
+        }
+
+        .physics-intro p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .concept-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+        }
+
+        .concept-card h3 {
+            color: var(--accent-blue);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .concept-card .icon {
+            font-size: 1.3em;
+        }
+
+        .equation-box {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            font-family: 'Times New Roman', serif;
+            font-size: 1.1em;
+            text-align: center;
+        }
+
+        .equation-box .main-eq {
+            font-size: 1.3em;
+            color: var(--accent-yellow);
+            margin-bottom: 10px;
+        }
+
+        .equation-box .description {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 0.85em;
+            color: var(--text-secondary);
+        }
+
+        .parameter-table {
+            width: 100%;
+            margin: 15px 0;
+        }
+
+        .parameter-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .parameter-table td:first-child {
+            font-family: 'Times New Roman', serif;
+            font-style: italic;
+            color: var(--accent-yellow);
+            width: 60px;
+        }
+
+        .layer-diagram {
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .layer-diagram canvas {
+            width: 100%;
+            height: 300px;
+        }
+
+        .physics-section {
+            margin-bottom: 40px;
+        }
+
+        .physics-section h2 {
+            color: var(--accent-blue);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .mechanism-steps {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .mechanism-step {
+            flex: 1;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .mechanism-step::after {
+            content: '→';
+            position: absolute;
+            right: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5em;
+            color: var(--accent-blue);
+        }
+
+        .mechanism-step:last-child::after {
+            display: none;
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            background: var(--accent-blue);
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-weight: 700;
+        }
+
+        .step-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .step-desc {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+        }
+
+        .ref-card {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .ref-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .ref-authors {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .ref-journal {
+            font-size: 0.85em;
+            color: var(--accent-blue);
+        }
+
+        .assumption-list {
+            list-style: none;
+        }
+
+        .assumption-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            gap: 12px;
+        }
+
+        .assumption-list li:last-child {
+            border-bottom: none;
+        }
+
+        .assumption-icon {
+            color: var(--accent-yellow);
+            font-size: 1.2em;
+        }
+
+        .assumption-text {
+            flex: 1;
+        }
+
+        .assumption-text strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .assumption-text span {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 900px) {
+            .concept-grid {
+                grid-template-columns: 1fr;
+            }
+            .mechanism-steps {
+                flex-direction: column;
+            }
+            .mechanism-step::after {
+                content: '↓';
+                position: static;
+                display: block;
+                margin: 15px auto 0;
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+<body data-dso-page="physics">
+    <div class="page-container">
+        <div class="page-header">
+            <h1>&#9883; Physical Basis</h1>
+            <p class="subtitle">The geophysical foundations of the Dynamic Stress Offset model</p>
+        </div>
+
+        <!-- Introduction -->
+        <div class="physics-intro">
+            <h2>Core Hypothesis</h2>
+            <p>
+                The DSO model proposes that the Earth's inner core is not perfectly centered within the outer core,
+                but instead exhibits a small positional offset that varies over time. This asymmetry in the
+                core-mantle system creates differential stress patterns at the core-mantle boundary (CMB) that
+                propagate upward through the mantle, ultimately influencing seismic stress distributions at
+                plate boundaries and subduction zones.
+            </p>
+        </div>
+
+        <!-- Key Physical Concepts -->
+        <div class="concept-grid">
+            <div class="concept-card">
+                <h3><span class="icon">&#127757;</span> Core Dynamics</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                    The inner core, primarily composed of solid iron-nickel alloy, floats within the
+                    liquid outer core. Gravitational and electromagnetic forces maintain its position,
+                    but perturbations can cause small displacements.
+                </p>
+                <div class="equation-box">
+                    <div class="main-eq">F<sub>g</sub> + F<sub>em</sub> + F<sub>buoy</sub> = m<sub>ic</sub> · a</div>
+                    <div class="description">Force balance on the inner core</div>
+                </div>
+                <table class="parameter-table">
+                    <tr>
+                        <td>F<sub>g</sub></td>
+                        <td>Gravitational restoring force</td>
+                    </tr>
+                    <tr>
+                        <td>F<sub>em</sub></td>
+                        <td>Electromagnetic coupling force</td>
+                    </tr>
+                    <tr>
+                        <td>F<sub>buoy</sub></td>
+                        <td>Buoyancy force in liquid outer core</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="concept-card">
+                <h3><span class="icon">&#9881;</span> Stress Transfer</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                    Asymmetric pressure at the CMB creates differential heating and flow patterns in
+                    the lower mantle. These patterns influence convection cells that ultimately affect
+                    surface plate dynamics.
+                </p>
+                <div class="equation-box">
+                    <div class="main-eq">σ(r, θ, φ) = f(δ<sub>core</sub>, η, T)</div>
+                    <div class="description">Stress field as function of core offset</div>
+                </div>
+                <table class="parameter-table">
+                    <tr>
+                        <td>δ<sub>core</sub></td>
+                        <td>Core offset magnitude (km)</td>
+                    </tr>
+                    <tr>
+                        <td>η</td>
+                        <td>Mantle viscosity (Pa·s)</td>
+                    </tr>
+                    <tr>
+                        <td>T</td>
+                        <td>Temperature field</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="concept-card">
+                <h3><span class="icon">&#128200;</span> Seismic Wave Analysis</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                    Core position is inferred from differential travel times of seismic waves
+                    (PKP phases) that traverse the inner core along different paths.
+                </p>
+                <div class="equation-box">
+                    <div class="main-eq">Δt = ∫<sub>path</sub> (1/v(r) - 1/v<sub>0</sub>) dr</div>
+                    <div class="description">Travel time anomaly integration</div>
+                </div>
+                <table class="parameter-table">
+                    <tr>
+                        <td>Δt</td>
+                        <td>Travel time residual (seconds)</td>
+                    </tr>
+                    <tr>
+                        <td>v(r)</td>
+                        <td>Velocity at radius r</td>
+                    </tr>
+                    <tr>
+                        <td>v<sub>0</sub></td>
+                        <td>Reference velocity model</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="concept-card">
+                <h3><span class="icon">&#127919;</span> Stress Zone Prediction</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                    The intersection of core-induced stress patterns with known fault geometries
+                    defines predicted stress enhancement zones.
+                </p>
+                <div class="equation-box">
+                    <div class="main-eq">P(M ≥ m) = 1 - exp(-λ(m) · Δt · A)</div>
+                    <div class="description">Probabilistic seismic hazard</div>
+                </div>
+                <table class="parameter-table">
+                    <tr>
+                        <td>λ(m)</td>
+                        <td>Rate parameter for magnitude m</td>
+                    </tr>
+                    <tr>
+                        <td>Δt</td>
+                        <td>Time window</td>
+                    </tr>
+                    <tr>
+                        <td>A</td>
+                        <td>Stress enhancement factor</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Physical Mechanism Chain -->
+        <div class="physics-section">
+            <h2>Mechanism Chain</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                The DSO model proposes a multi-step causal chain from core displacement to surface seismicity:
+            </p>
+
+            <div class="mechanism-steps">
+                <div class="mechanism-step">
+                    <div class="step-number">1</div>
+                    <div class="step-title">Core Displacement</div>
+                    <div class="step-desc">Inner core shifts from geometric center by 0.5-2 km</div>
+                </div>
+                <div class="mechanism-step">
+                    <div class="step-number">2</div>
+                    <div class="step-title">CMB Pressure Asymmetry</div>
+                    <div class="step-desc">Differential pressure develops at core-mantle boundary</div>
+                </div>
+                <div class="mechanism-step">
+                    <div class="step-number">3</div>
+                    <div class="step-title">Mantle Stress Transfer</div>
+                    <div class="step-desc">Stress propagates through lower/upper mantle over time</div>
+                </div>
+                <div class="mechanism-step">
+                    <div class="step-number">4</div>
+                    <div class="step-title">Surface Expression</div>
+                    <div class="step-desc">Enhanced stress at specific plate boundary segments</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Earth Structure Diagram -->
+        <div class="physics-section">
+            <h2>Earth Structure & Wave Paths</h2>
+            <div class="layer-diagram">
+                <canvas id="earth-structure"></canvas>
+            </div>
+            <div class="grid-3" style="margin-top: 15px;">
+                <div class="stat-box">
+                    <div class="stat-value" style="color: var(--accent-yellow);">1,220 km</div>
+                    <div class="stat-label">Inner Core Radius</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" style="color: var(--accent-orange);">3,480 km</div>
+                    <div class="stat-label">Outer Core Radius</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" style="color: var(--accent-blue);">6,371 km</div>
+                    <div class="stat-label">Earth Radius</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Assumptions -->
+        <div class="physics-section">
+            <h2>Key Assumptions & Limitations</h2>
+            <div class="card">
+                <ul class="assumption-list">
+                    <li>
+                        <span class="assumption-icon">&#9888;</span>
+                        <div class="assumption-text">
+                            <strong>Core Position Detectability</strong>
+                            <span>Assumes inner core offset can be resolved from seismic travel time residuals with sufficient accuracy (&lt; 0.5 km uncertainty)</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="assumption-icon">&#9888;</span>
+                        <div class="assumption-text">
+                            <strong>Stress Coupling Efficiency</strong>
+                            <span>Assumes efficient mechanical coupling between CMB pressure anomalies and lower mantle flow patterns</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="assumption-icon">&#9888;</span>
+                        <div class="assumption-text">
+                            <strong>Temporal Correlation</strong>
+                            <span>Assumes time lag between core displacement and surface stress expression is predictable (estimated 30-90 days)</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="assumption-icon">&#9888;</span>
+                        <div class="assumption-text">
+                            <strong>Mantle Homogeneity</strong>
+                            <span>Simplified treatment of mantle heterogeneity; actual stress propagation is more complex</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="assumption-icon">&#9888;</span>
+                        <div class="assumption-text">
+                            <strong>Linear Superposition</strong>
+                            <span>Assumes stress fields can be linearly superimposed; non-linear effects may be significant</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Supporting Evidence -->
+        <div class="physics-section">
+            <h2>Supporting Observations</h2>
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 style="color: var(--accent-blue);">&#128300; Seismological Evidence</h3>
+                    </div>
+                    <ul style="color: var(--text-secondary); list-style: disc; padding-left: 20px;">
+                        <li style="margin-bottom: 10px;">PKP travel time anomalies consistent with ~1 km inner core offset (Wang & Vidale, 2022)</li>
+                        <li style="margin-bottom: 10px;">Inner core super-rotation rate of 0.1-0.3°/year observed</li>
+                        <li style="margin-bottom: 10px;">Hemispherical anisotropy in inner core seismic velocities</li>
+                        <li>Core-sensitive modes show temporal variations</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 style="color: var(--accent-blue);">&#127757; Geodynamic Constraints</h3>
+                    </div>
+                    <ul style="color: var(--text-secondary); list-style: disc; padding-left: 20px;">
+                        <li style="margin-bottom: 10px;">Electromagnetic torque calculations support core oscillation</li>
+                        <li style="margin-bottom: 10px;">Gravitational restoring force allows small displacements</li>
+                        <li style="margin-bottom: 10px;">Mantle convection patterns show long-wavelength structure</li>
+                        <li>Plate velocity changes correlate with deep mantle anomalies</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key References -->
+        <div class="physics-section">
+            <h2>Key References</h2>
+            <div class="ref-card">
+                <div class="ref-title">Inner core dynamics inferred from seismological observations</div>
+                <div class="ref-authors">Vidale, J.E. & Wang, R.</div>
+                <div class="ref-journal">Nature Geoscience, 2022</div>
+            </div>
+            <div class="ref-card">
+                <div class="ref-title">Core-mantle electromagnetic coupling and inner core motion</div>
+                <div class="ref-authors">Dumberry, M. & Mound, J.</div>
+                <div class="ref-journal">Geophysical Journal International, 2008</div>
+            </div>
+            <div class="ref-card">
+                <div class="ref-title">The gravitational stabilization of the inner core</div>
+                <div class="ref-authors">Buffett, B.A.</div>
+                <div class="ref-journal">Journal of Geophysical Research, 1997</div>
+            </div>
+            <div class="ref-card">
+                <div class="ref-title">Stress transfer from the Earth's core</div>
+                <div class="ref-authors">Theoretical framework for CMB stress propagation</div>
+                <div class="ref-journal">DSO Model Development Papers</div>
+            </div>
+        </div>
+
+        <!-- Related Pages -->
+        <div class="card">
+            <div class="card-header">
+                <h2><span class="icon">&#128279;</span> Related Documentation</h2>
+            </div>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <a href="dso_whitepaper.html" class="btn btn-primary">
+                    <span>&#128196;</span> Model Whitepaper
+                </a>
+                <a href="dso_core_mechanics.html" class="btn btn-secondary">
+                    <span>&#9881;</span> Core Mechanics
+                </a>
+                <a href="dso_verification.html" class="btn btn-secondary">
+                    <span>&#128203;</span> Verification Data
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function drawEarthStructure() {
+            const canvas = document.getElementById('earth-structure');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = canvas.offsetWidth * 2;
+            canvas.height = canvas.offsetHeight * 2;
+            ctx.scale(2, 2);
+
+            const w = canvas.offsetWidth;
+            const h = canvas.offsetHeight;
+            const centerX = w / 2;
+            const centerY = h / 2;
+            const scale = Math.min(w, h) / 2.5;
+
+            // Background
+            ctx.fillStyle = '#0a0a1a';
+            ctx.fillRect(0, 0, w, h);
+
+            // Earth layers (to scale)
+            const layers = [
+                { radius: 1.0, color: 'rgba(139, 69, 19, 0.4)', label: 'Mantle' },
+                { radius: 0.547, color: 'rgba(255, 102, 0, 0.5)', label: 'Outer Core' },
+                { radius: 0.192, color: '#f4d03f', label: 'Inner Core' }
+            ];
+
+            // Draw layers
+            layers.forEach(layer => {
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, layer.radius * scale, 0, Math.PI * 2);
+                ctx.fillStyle = layer.color;
+                ctx.fill();
+            });
+
+            // Core offset indicator
+            const offsetX = 8;
+            const offsetY = 4;
+
+            // Draw offset inner core
+            ctx.beginPath();
+            ctx.arc(centerX + offsetX, centerY + offsetY, 0.192 * scale, 0, Math.PI * 2);
+            ctx.fillStyle = '#f4d03f';
+            ctx.fill();
+
+            // Core glow
+            const glow = ctx.createRadialGradient(
+                centerX + offsetX, centerY + offsetY, 0,
+                centerX + offsetX, centerY + offsetY, 0.25 * scale
+            );
+            glow.addColorStop(0, 'rgba(244, 208, 63, 0.4)');
+            glow.addColorStop(1, 'transparent');
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(centerX + offsetX, centerY + offsetY, 0.25 * scale, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Offset arrow
+            ctx.strokeStyle = '#e74c3c';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 3]);
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(centerX + offsetX, centerY + offsetY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Draw seismic ray paths
+            ctx.strokeStyle = 'rgba(124, 179, 255, 0.5)';
+            ctx.lineWidth = 1;
+
+            // PKP path through core
+            ctx.beginPath();
+            ctx.moveTo(centerX - scale * 0.9, centerY - scale * 0.4);
+            ctx.quadraticCurveTo(centerX, centerY, centerX + scale * 0.9, centerY + scale * 0.4);
+            ctx.stroke();
+
+            // Labels
+            ctx.fillStyle = '#889';
+            ctx.font = '11px sans-serif';
+            ctx.textAlign = 'left';
+
+            // Layer labels
+            ctx.fillText('Mantle', centerX + scale * 0.7, centerY - scale * 0.3);
+            ctx.fillText('Outer Core (liquid)', centerX + scale * 0.35, centerY + scale * 0.15);
+            ctx.fillStyle = '#f4d03f';
+            ctx.fillText('Inner Core', centerX + scale * 0.1, centerY + scale * 0.35);
+
+            // Offset label
+            ctx.fillStyle = '#e74c3c';
+            ctx.fillText('δ = 1.24 km', centerX + 15, centerY - 10);
+
+            // Ray path label
+            ctx.fillStyle = '#7cb3ff';
+            ctx.fillText('PKP ray path', centerX + scale * 0.5, centerY + scale * 0.55);
+        }
+
+        window.addEventListener('load', drawEarthStructure);
+        window.addEventListener('resize', drawEarthStructure);
+    </script>
+</body>
+</html>

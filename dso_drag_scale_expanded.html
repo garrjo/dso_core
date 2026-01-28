@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSO - Drag and Scale: Expanded Framework</title>
+    <link rel="stylesheet" href="shared/styles.css">
+    <script src="shared/nav.js"></script>
+    <style>
+        .paper-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .paper-header {
+            text-align: center;
+            padding: 40px 0;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 40px;
+            background: linear-gradient(135deg, rgba(155, 89, 182, 0.1), rgba(124, 179, 255, 0.1));
+            border-radius: 12px;
+        }
+
+        .paper-title {
+            font-size: 2em;
+            color: var(--accent-blue);
+            margin-bottom: 15px;
+        }
+
+        .paper-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        .paper-meta {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+
+        .paper-author {
+            font-size: 1.1em;
+            color: var(--accent-purple);
+            margin-bottom: 10px;
+        }
+
+        .part-header {
+            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
+            border: 1px solid var(--accent-purple);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 40px 0 30px 0;
+            text-align: center;
+        }
+
+        .part-header h2 {
+            color: var(--accent-purple);
+            font-size: 1.4em;
+            margin: 0;
+        }
+
+        .part-header p {
+            color: var(--text-secondary);
+            margin: 10px 0 0 0;
+        }
+
+        .paper-section {
+            margin-bottom: 50px;
+        }
+
+        .paper-section h2 {
+            color: var(--accent-blue);
+            font-size: 1.4em;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .paper-section h3 {
+            color: var(--accent-yellow);
+            font-size: 1.1em;
+            margin: 30px 0 15px 0;
+        }
+
+        .paper-section h4 {
+            color: var(--accent-green);
+            font-size: 1em;
+            margin: 20px 0 10px 0;
+        }
+
+        .paper-section p {
+            color: var(--text-secondary);
+            line-height: 1.9;
+            margin-bottom: 18px;
+            text-align: justify;
+        }
+
+        .equation-box {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 25px;
+            margin: 25px 0;
+            text-align: center;
+            font-family: 'Times New Roman', serif;
+        }
+
+        .equation-main {
+            font-size: 1.5em;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+        }
+
+        .equation-label {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .definition-box {
+            background: rgba(124, 179, 255, 0.1);
+            border-left: 4px solid var(--accent-blue);
+            padding: 20px 25px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .definition-box strong {
+            color: var(--accent-blue);
+        }
+
+        .theorem-box {
+            background: rgba(78, 205, 196, 0.1);
+            border: 1px solid var(--accent-green);
+            border-radius: 8px;
+            padding: 20px 25px;
+            margin: 25px 0;
+        }
+
+        .theorem-box h4 {
+            color: var(--accent-green);
+            margin-top: 0;
+        }
+
+        .literature-ref {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin: 15px 0;
+            border-left: 3px solid var(--accent-purple);
+        }
+
+        .literature-ref .author {
+            color: var(--accent-purple);
+            font-weight: 600;
+        }
+
+        .literature-ref .title {
+            color: var(--text-primary);
+            font-style: italic;
+        }
+
+        .literature-ref .journal {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .literature-ref .quote {
+            color: var(--text-secondary);
+            font-style: italic;
+            margin-top: 10px;
+            padding-left: 15px;
+            border-left: 2px solid var(--border-color);
+        }
+
+        .figure-box {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .figure-canvas {
+            width: 100%;
+            height: 300px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .figure-caption {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+            margin: 30px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, var(--accent-purple), var(--accent-blue));
+            border-radius: 2px;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 25px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -26px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            background: var(--accent-purple);
+            border-radius: 50%;
+            border: 2px solid var(--bg-primary);
+        }
+
+        .timeline-year {
+            color: var(--accent-purple);
+            font-weight: 700;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .timeline-title {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .timeline-content {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            line-height: 1.7;
+        }
+
+        .mapping-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 25px 0;
+        }
+
+        .mapping-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .mapping-card h5 {
+            color: var(--accent-blue);
+            margin-bottom: 12px;
+        }
+
+        .mapping-card p {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            margin: 0;
+        }
+
+        .toc {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 40px;
+        }
+
+        .toc h3 {
+            color: var(--accent-blue);
+            margin-bottom: 20px;
+        }
+
+        .toc-part {
+            margin-bottom: 20px;
+        }
+
+        .toc-part-title {
+            color: var(--accent-purple);
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .toc ul {
+            list-style: none;
+            margin-left: 15px;
+        }
+
+        .toc li {
+            padding: 5px 0;
+        }
+
+        .toc a {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .toc a:hover {
+            color: var(--accent-blue);
+        }
+
+        @media (max-width: 768px) {
+            .mapping-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body data-dso-page="drag-scale-expanded">
+    <div class="page-container paper-container">
+        <!-- Paper Header -->
+        <div class="paper-header">
+            <h1 class="paper-title">Drag and Scale: A Unified Framework</h1>
+            <p class="paper-subtitle">Mathematical Formalization and Literature Engagement</p>
+            <p class="paper-author">Joe William Garrett</p>
+            <p class="paper-meta">December 2025 | Expanded Treatment</p>
+        </div>
+
+        <!-- Table of Contents -->
+        <div class="toc">
+            <h3>Contents</h3>
+            <div class="toc-part">
+                <div class="toc-part-title">Part I: Foundations and Literature</div>
+                <ul>
+                    <li><a href="#planck">1.1 Planck and the Quantum Hypothesis (1900)</a></li>
+                    <li><a href="#einstein">1.2 Einstein's Annus Mirabilis (1905)</a></li>
+                    <li><a href="#gr">1.3 General Relativity (1915)</a></li>
+                    <li><a href="#boltzmann">1.4 Boltzmann and Entropy</a></li>
+                    <li><a href="#penrose">1.5 Penrose-Hawking Singularity Theorems</a></li>
+                    <li><a href="#bell">1.6 Bell's Theorem (1964)</a></li>
+                    <li><a href="#wheeler">1.7 Wheeler's "It from Bit"</a></li>
+                    <li><a href="#erepr">1.8 The ER=EPR Conjecture (2013)</a></li>
+                </ul>
+            </div>
+            <div class="toc-part">
+                <div class="toc-part-title">Part II: Mathematical Formalization</div>
+                <ul>
+                    <li><a href="#drag-tensor">2.1 Drag as a Tensor Field</a></li>
+                    <li><a href="#scale-metric">2.2 Scale as the Metric Structure</a></li>
+                    <li><a href="#energy-invariant">2.3 Energy as Drag-Scale Invariant</a></li>
+                    <li><a href="#derivation">2.4 Derivation: E = drag × scale²</a></li>
+                    <li><a href="#efe-mapping">2.5 Mapping to Einstein Field Equations</a></li>
+                    <li><a href="#quantum-operators">2.6 Mapping to Quantum Operators</a></li>
+                </ul>
+            </div>
+            <div class="toc-part">
+                <div class="toc-part-title">Part III: Physical Phenomena</div>
+                <ul>
+                    <li><a href="#blackholes">3.1 Black Holes: Conversion Thresholds</a></li>
+                    <li><a href="#entanglement">3.2 Quantum Entanglement</a></li>
+                    <li><a href="#thermodynamics">3.3 Thermodynamic Interpretation</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- PART I -->
+        <div class="part-header">
+            <h2>PART I: FOUNDATIONS AND LITERATURE ENGAGEMENT</h2>
+            <p>Historical development from Planck through contemporary quantum gravity</p>
+        </div>
+
+        <!-- Historical Timeline -->
+        <div class="paper-section">
+            <h2>1. Historical Foundations: From Planck to ER=EPR</h2>
+
+            <div class="timeline" id="planck">
+                <div class="timeline-item">
+                    <div class="timeline-year">1900</div>
+                    <div class="timeline-title">Planck and the Quantum Hypothesis</div>
+                    <div class="timeline-content">
+                        Max Planck's introduction of energy quanta (E = hν) to solve the black-body radiation
+                        problem marks the birth of quantum physics. From the drag-scale perspective, Planck's
+                        constant h represents the <strong>fundamental unit of drag-scale interaction</strong>—the
+                        minimum 'cost' of energy exchange between drag-bound systems.
+                    </div>
+                </div>
+
+                <div class="timeline-item" id="einstein">
+                    <div class="timeline-year">1905</div>
+                    <div class="timeline-title">Einstein's Annus Mirabilis</div>
+                    <div class="timeline-content">
+                        Einstein's special relativity and mass-energy equivalence (E = mc²) establish the
+                        foundational relationship. The drag-scale framework reinterprets: the first postulate
+                        affirms the universality of drag-scale relationships; the second reveals c not as a
+                        speed limit but as the fundamental measure of scale itself.
+                    </div>
+                </div>
+
+                <div class="timeline-item" id="gr">
+                    <div class="timeline-year">1915</div>
+                    <div class="timeline-title">General Relativity</div>
+                    <div class="timeline-content">
+                        Einstein's field equations relate spacetime geometry to matter-energy distribution.
+                        Under drag-scale: "Scale structure constrains drag distribution; drag concentration
+                        patterns the scale fabric." The Einstein tensor describes how scale is curved by
+                        accumulated drag.
+                    </div>
+                </div>
+
+                <div class="timeline-item" id="boltzmann">
+                    <div class="timeline-year">1877</div>
+                    <div class="timeline-title">Boltzmann's Entropy</div>
+                    <div class="timeline-content">
+                        Boltzmann's S = k ln W connects macroscopic thermodynamics to microscopic statistics.
+                        From drag-scale: entropy quantifies drag's tendency to distribute rather than concentrate.
+                        The second law describes drag's natural evolution toward maximum dispersal within the
+                        scale fabric.
+                    </div>
+                </div>
+
+                <div class="timeline-item" id="penrose">
+                    <div class="timeline-year">1965</div>
+                    <div class="timeline-title">Penrose-Hawking Singularity Theorems</div>
+                    <div class="timeline-content">
+                        Penrose proves singularities are generic in gravitational collapse. The drag-scale
+                        framework reinterprets: geodesic incompleteness signals categorical transition—where
+                        drag-based measurement categories no longer apply because the phenomenon has exited
+                        their domain.
+                    </div>
+                </div>
+
+                <div class="timeline-item" id="bell">
+                    <div class="timeline-year">1964</div>
+                    <div class="timeline-title">Bell's Theorem</div>
+                    <div class="timeline-content">
+                        Bell proves no local hidden-variable theory can reproduce quantum predictions.
+                        Experimental violations of Bell inequalities confirm quantum non-locality. From
+                        drag-scale: locality is an observer imposition; entangled particles are one thing
+                        perceived as two.
+                    </div>
+                </div>
+
+                <div class="timeline-item" id="wheeler">
+                    <div class="timeline-year">1989</div>
+                    <div class="timeline-title">Wheeler's "It from Bit"</div>
+                    <div class="timeline-content">
+                        Wheeler proposes that physical reality emerges from information. The participatory
+                        universe positions observers as constitutive of reality. This aligns with the
+                        framework's treatment of observation as a drag-bound process that renders phenomena
+                        into measurable form.
+                    </div>
+                </div>
+
+                <div class="timeline-item" id="erepr">
+                    <div class="timeline-year">2013</div>
+                    <div class="timeline-title">The ER=EPR Conjecture</div>
+                    <div class="timeline-content">
+                        Maldacena and Susskind propose equivalence between Einstein-Rosen bridges (wormholes)
+                        and EPR entanglement. For drag-scale: if entanglement and geometric connection are
+                        equivalent, entangled particles being 'one thing perceived as two' receives geometric
+                        interpretation.
+                    </div>
+                </div>
+            </div>
+
+            <div class="literature-ref">
+                <div class="author">Maldacena, J. & Susskind, L. (2013)</div>
+                <div class="title">"Cool Horizons for Entangled Black Holes"</div>
+                <div class="journal">Fortschritte der Physik, 61(9), 781-811</div>
+                <div class="quote">
+                    "In fact we go even further and claim that even for an entangled pair of particles, in a
+                    quantum theory of gravity there must be a Planckian bridge between them, albeit a very
+                    quantum mechanical bridge which probably cannot be described by classical geometry."
+                </div>
+            </div>
+        </div>
+
+        <!-- PART II -->
+        <div class="part-header">
+            <h2>PART II: MATHEMATICAL FORMALIZATION</h2>
+            <p>Formal definitions and mappings to existing physics</p>
+        </div>
+
+        <div class="paper-section" id="drag-tensor">
+            <h2>2. Formal Definitions of Drag and Scale</h2>
+
+            <h3>2.1 Drag as a Tensor Field</h3>
+            <p>
+                Within the mathematical apparatus of general relativity, drag can be represented as a
+                symmetric rank-2 tensor field D<sub>μν</sub> on a 4-dimensional pseudo-Riemannian manifold.
+            </p>
+
+            <div class="definition-box">
+                <strong>Definition 2.1 (Drag Tensor):</strong> The drag tensor D<sub>μν</sub> is a symmetric
+                (0,2) tensor field satisfying:
+                <ul style="margin-top: 10px; color: var(--text-secondary);">
+                    <li>(i) D<sub>μν</sub> = D<sub>νμ</sub> (symmetry)</li>
+                    <li>(ii) D<sub>μν</sub>u<sup>μ</sup>u<sup>ν</sup> ≥ 0 for all timelike vectors u<sup>μ</sup> (weak energy condition)</li>
+                    <li>(iii) ∇<sub>μ</sub>D<sup>μν</sup> = J<sup>ν</sup> (conservation with source)</li>
+                </ul>
+            </div>
+
+            <p>
+                The identification of the drag tensor with the stress-energy tensor of general relativity:
+            </p>
+
+            <div class="equation-box">
+                <div class="equation-main">D<sub>μν</sub> = (c²/G) T<sub>μν</sub></div>
+                <div class="equation-label">Mapping drag to stress-energy tensor</div>
+            </div>
+
+            <h3 id="scale-metric">2.2 Scale as the Metric Structure</h3>
+            <p>
+                Scale is formalized through the metric tensor g<sub>μν</sub> itself, which defines the
+                fabric of spacetime extension.
+            </p>
+
+            <div class="definition-box">
+                <strong>Definition 2.2 (Scale Structure):</strong> The scale structure is the Lorentzian
+                metric g<sub>μν</sub> with signature (−,+,+,+), satisfying the Einstein field equations
+                under drag-induced curvature.
+            </div>
+
+            <div class="equation-box">
+                <div class="equation-main">ds² = g<sub>μν</sub>dx<sup>μ</sup>dx<sup>ν</sup></div>
+                <div class="equation-label">The proper interval measuring separation in the scale fabric</div>
+            </div>
+
+            <h3 id="energy-invariant">2.3 Energy as the Drag-Scale Invariant</h3>
+
+            <div class="definition-box">
+                <strong>Definition 2.3 (Energy as Invariant):</strong> Energy E is defined as the contraction:
+            </div>
+
+            <div class="equation-box">
+                <div class="equation-main">E = ∫ D<sub>μν</sub> g<sup>μν</sup> √(−g) d⁴x</div>
+                <div class="equation-label">Total drag-scale coupling over a spacetime region</div>
+            </div>
+
+            <h3 id="derivation">2.4 Derivation: E = drag × scale² Reproduces E = mc²</h3>
+
+            <div class="theorem-box">
+                <h4>Theorem 2.1</h4>
+                <p style="color: var(--text-secondary);">
+                    The drag-scale energy relation E = drag × scale² is mathematically equivalent to
+                    E = mc² under the identifications drag ≡ m and scale ≡ c.
+                </p>
+            </div>
+
+            <p>
+                <strong>Proof:</strong> Consider a point particle of rest mass m. In the rest frame, the
+                stress-energy tensor has only one non-zero component: T<sub>00</sub> = ρc², where ρ is
+                the mass density. For a point particle, ρ = mδ³(x), so the total energy is:
+            </p>
+
+            <div class="equation-box">
+                <div class="equation-main">E = ∫ T<sup>00</sup> d³x = mc²</div>
+                <div class="equation-label">Recovery of Einstein's mass-energy equivalence</div>
+            </div>
+
+            <div class="figure-box">
+                <canvas id="fig-derivation" class="figure-canvas"></canvas>
+                <div class="figure-caption">
+                    Figure 1: The mathematical equivalence between E = mc² and E = drag × scale²,
+                    showing the tensor formalization.
+                </div>
+            </div>
+
+            <h3 id="efe-mapping">2.5 Mapping to the Einstein Field Equations</h3>
+
+            <div class="equation-box">
+                <div class="equation-main">G<sub>μν</sub> + Λg<sub>μν</sub> = (8πG/c⁴) T<sub>μν</sub></div>
+                <div class="equation-label">Einstein Field Equations</div>
+            </div>
+
+            <div class="mapping-grid">
+                <div class="mapping-card">
+                    <h5>G<sub>μν</sub> (Einstein tensor)</h5>
+                    <p>Describes deviation of scale structure from flat geometry—how the scale fabric is curved</p>
+                </div>
+                <div class="mapping-card">
+                    <h5>T<sub>μν</sub> (Stress-energy tensor)</h5>
+                    <p>Describes drag distribution—the localized resistance that sources curvature</p>
+                </div>
+                <div class="mapping-card">
+                    <h5>8πG/c⁴ (Coupling constant)</h5>
+                    <p>Sets the ratio between drag density and curvature—how much scale distortion drag produces</p>
+                </div>
+                <div class="mapping-card">
+                    <h5>Λ (Cosmological constant)</h5>
+                    <p>Vacuum drag-scale baseline—residual tension in the fabric without localized concentrations</p>
+                </div>
+            </div>
+
+            <h3 id="quantum-operators">2.6 Mapping to Quantum Operators</h3>
+
+            <div class="definition-box">
+                <strong>Definition 2.4 (Drag Operator):</strong> The drag operator D̂ is the Hamiltonian
+                Ĥ divided by c²:
+                <div style="text-align: center; margin-top: 15px; font-size: 1.2em; color: var(--accent-yellow);">
+                    D̂ = Ĥ/c²
+                </div>
+            </div>
+
+            <p>
+                The canonical commutation relations [x̂<sub>i</sub>, p̂<sub>j</sub>] = iℏδ<sub>ij</sub>
+                express the fundamental uncertainty in simultaneous drag-scale specification. The
+                Heisenberg uncertainty principle:
+            </p>
+
+            <div class="equation-box">
+                <div class="equation-main">ΔxΔp ≥ ℏ/2</div>
+                <div class="equation-label">
+                    Drag (momentum) and scale (position) cannot both be specified with arbitrary precision
+                </div>
+            </div>
+        </div>
+
+        <!-- PART III -->
+        <div class="part-header">
+            <h2>PART III: DETAILED TREATMENT OF PHYSICAL PHENOMENA</h2>
+            <p>Application of the framework to specific physical systems</p>
+        </div>
+
+        <div class="paper-section" id="blackholes">
+            <h2>3. Black Holes: Conversion Thresholds</h2>
+
+            <h3>3.1 Standard Picture and Observational Data</h3>
+            <p>
+                Black holes are regions of spacetime where gravity is so strong that nothing, including
+                light, can escape past the event horizon. Recent observational evidence includes:
+            </p>
+            <ul style="color: var(--text-secondary); margin-left: 20px;">
+                <li>Event Horizon Telescope's 2019 image of M87*</li>
+                <li>LIGO/VIRGO gravitational wave detections from mergers</li>
+                <li>Stellar orbits around Sagittarius A* (≈4 million solar masses)</li>
+            </ul>
+
+            <h3>3.2 The Drag-Scale Interpretation</h3>
+
+            <div class="figure-box">
+                <canvas id="fig-blackhole-detailed" class="figure-canvas"></canvas>
+                <div class="figure-caption">
+                    Figure 2: Black hole as conversion threshold showing drag concentration at the
+                    event horizon and conversion back to scale.
+                </div>
+            </div>
+
+            <div class="mapping-grid">
+                <div class="mapping-card">
+                    <h5>Event Horizon</h5>
+                    <p>
+                        The threshold where drag concentration becomes so extreme that scale structure
+                        can no longer support causal connection to the exterior.
+                    </p>
+                </div>
+                <div class="mapping-card">
+                    <h5>Interior Dynamics</h5>
+                    <p>
+                        Inside the horizon, drag continues to concentrate. The radial coordinate becomes
+                        timelike—inward progression is as inevitable as the passage of time.
+                    </p>
+                </div>
+                <div class="mapping-card">
+                    <h5>The 'Singularity'</h5>
+                    <p>
+                        A conversion threshold where saturated drag 'unfolds' back into scale. Mathematical
+                        divergences arise from applying drag-bound equations beyond their domain.
+                    </p>
+                </div>
+                <div class="mapping-card">
+                    <h5>Information Paradox Resolution</h5>
+                    <p>
+                        Information is relationship across separation; separation is a drag phenomenon.
+                        At conversion, the category transforms—information is not lost.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="paper-section" id="entanglement">
+            <h2>4. Quantum Entanglement and the ER=EPR Connection</h2>
+
+            <p>
+                The ER=EPR conjecture provides striking support for the drag-scale framework. If
+                entanglement and geometric connection (wormholes) are equivalent, then entangled
+                particles being 'one thing perceived as two' receives geometric interpretation.
+            </p>
+
+            <div class="literature-ref">
+                <div class="author">Bell, J.S. (1964)</div>
+                <div class="title">"On the Einstein Podolsky Rosen Paradox"</div>
+                <div class="journal">Physics, 1(3), 195-200</div>
+                <div class="quote">
+                    Bell demonstrated that no local hidden-variable theory can reproduce all predictions
+                    of quantum mechanics, transforming a philosophical debate into an empirical question.
+                </div>
+            </div>
+
+            <div class="figure-box">
+                <canvas id="fig-entanglement" class="figure-canvas"></canvas>
+                <div class="figure-caption">
+                    Figure 3: Entangled particles as one phenomenon. The apparent spatial separation
+                    is imposed by drag-bound observation; the underlying unity persists.
+                </div>
+            </div>
+        </div>
+
+        <div class="paper-section" id="thermodynamics">
+            <h2>5. Thermodynamic Interpretation</h2>
+
+            <div class="definition-box">
+                <strong>Definition 2.6 (Entropy as Drag Distribution):</strong> Entropy S quantifies the
+                dispersal of drag across available scale configurations:
+                <div style="text-align: center; margin-top: 15px;">
+                    <span style="font-size: 1.3em; color: var(--accent-yellow);">S = k<sub>B</sub> ln W</span>
+                </div>
+            </div>
+
+            <p>
+                The second law of thermodynamics—entropy increases in isolated systems—describes drag's
+                natural evolution toward maximum dispersal within the scale fabric. Heat death represents
+                maximum drag distribution: minimum structure, maximum uniformity.
+            </p>
+
+            <div class="mapping-grid">
+                <div class="mapping-card">
+                    <h5>Low Entropy</h5>
+                    <p>Drag concentrated, structured, coherent. Few microstates, high information content.</p>
+                </div>
+                <div class="mapping-card">
+                    <h5>High Entropy</h5>
+                    <p>Drag dispersed, uniform, disordered. Many microstates, low information content.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="card" style="margin-top: 40px;">
+            <div class="card-header">
+                <h2><span class="icon">📖</span> Related Documents</h2>
+            </div>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <a href="dso_drag_scale_framework.html" class="btn btn-primary">
+                    <span>📄</span> Core Framework (Conceptual)
+                </a>
+                <a href="dso_physics.html" class="btn btn-secondary">
+                    <span>⚛️</span> DSO Physical Basis
+                </a>
+                <a href="dso_whitepaper.html" class="btn btn-secondary">
+                    <span>📄</span> Model Whitepaper
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Figure 1: Derivation visualization
+        function drawDerivation() {
+            const canvas = document.getElementById('fig-derivation');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = canvas.offsetWidth * 2;
+            canvas.height = canvas.offsetHeight * 2;
+            ctx.scale(2, 2);
+
+            const w = canvas.offsetWidth;
+            const h = canvas.offsetHeight;
+
+            ctx.fillStyle = '#0a0a1a';
+            ctx.fillRect(0, 0, w, h);
+
+            // Left side: Standard form
+            ctx.fillStyle = '#7cb3ff';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Standard Form', w * 0.25, 40);
+
+            ctx.fillStyle = '#f4d03f';
+            ctx.font = '24px serif';
+            ctx.fillText('E = mc²', w * 0.25, h / 2);
+
+            ctx.fillStyle = '#889';
+            ctx.font = '11px sans-serif';
+            ctx.fillText('m = mass', w * 0.25, h / 2 + 40);
+            ctx.fillText('c = speed of light', w * 0.25, h / 2 + 55);
+
+            // Arrow
+            ctx.strokeStyle = '#4ecdc4';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(w * 0.4, h / 2);
+            ctx.lineTo(w * 0.6, h / 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(w * 0.6, h / 2);
+            ctx.lineTo(w * 0.55, h / 2 - 8);
+            ctx.lineTo(w * 0.55, h / 2 + 8);
+            ctx.fill();
+
+            ctx.fillStyle = '#4ecdc4';
+            ctx.font = '10px sans-serif';
+            ctx.fillText('Reinterpretation', w * 0.5, h / 2 - 20);
+
+            // Right side: Drag-Scale form
+            ctx.fillStyle = '#9b59b6';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.fillText('Drag-Scale Form', w * 0.75, 40);
+
+            ctx.fillStyle = '#f4d03f';
+            ctx.font = '24px serif';
+            ctx.fillText('E = drag × scale²', w * 0.75, h / 2);
+
+            ctx.fillStyle = '#889';
+            ctx.font = '11px sans-serif';
+            ctx.fillText('drag = localized resistance', w * 0.75, h / 2 + 40);
+            ctx.fillText('scale = extension fabric', w * 0.75, h / 2 + 55);
+
+            // Tensor form at bottom
+            ctx.fillStyle = '#889';
+            ctx.font = '12px serif';
+            ctx.fillText('Tensor Form: E = ∫ Dμν gμν √(−g) d⁴x', w / 2, h - 30);
+        }
+
+        // Figure 2: Detailed black hole
+        function drawBlackholeDetailed() {
+            const canvas = document.getElementById('fig-blackhole-detailed');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = canvas.offsetWidth * 2;
+            canvas.height = canvas.offsetHeight * 2;
+            ctx.scale(2, 2);
+
+            const w = canvas.offsetWidth;
+            const h = canvas.offsetHeight;
+            const centerX = w / 2;
+            const centerY = h / 2;
+
+            ctx.fillStyle = '#0a0a1a';
+            ctx.fillRect(0, 0, w, h);
+
+            // Accretion disk
+            ctx.strokeStyle = 'rgba(244, 208, 63, 0.3)';
+            ctx.lineWidth = 20;
+            ctx.beginPath();
+            ctx.ellipse(centerX, centerY, 100, 30, 0, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Event horizon glow
+            const horizonGlow = ctx.createRadialGradient(centerX, centerY, 20, centerX, centerY, 80);
+            horizonGlow.addColorStop(0, 'rgba(231, 76, 60, 0.8)');
+            horizonGlow.addColorStop(0.5, 'rgba(155, 89, 182, 0.4)');
+            horizonGlow.addColorStop(1, 'transparent');
+            ctx.fillStyle = horizonGlow;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 80, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Event horizon circle
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 40, 0, Math.PI * 2);
+            ctx.strokeStyle = '#e74c3c';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Black center
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 25, 0, Math.PI * 2);
+            ctx.fillStyle = '#000';
+            ctx.fill();
+
+            // Conversion zone indicator
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 15, 0, Math.PI * 2);
+            ctx.strokeStyle = '#7cb3ff';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([3, 3]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Labels
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#e74c3c';
+            ctx.fillText('Event Horizon', centerX + 50, centerY - 30);
+            ctx.fillStyle = '#7cb3ff';
+            ctx.fillText('Conversion Zone', centerX + 50, centerY + 5);
+            ctx.fillStyle = '#f4d03f';
+            ctx.fillText('Accretion (Drag In)', centerX + 50, centerY + 40);
+
+            // Arrows showing flow
+            ctx.strokeStyle = '#f4d03f';
+            ctx.lineWidth = 1.5;
+            for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 3) {
+                const r1 = 90;
+                const r2 = 50;
+                ctx.beginPath();
+                ctx.moveTo(centerX + Math.cos(angle) * r1, centerY + Math.sin(angle) * r1 * 0.3);
+                ctx.lineTo(centerX + Math.cos(angle) * r2, centerY + Math.sin(angle) * r2 * 0.3);
+                ctx.stroke();
+            }
+        }
+
+        // Figure 3: Entanglement
+        function drawEntanglement() {
+            const canvas = document.getElementById('fig-entanglement');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = canvas.offsetWidth * 2;
+            canvas.height = canvas.offsetHeight * 2;
+            ctx.scale(2, 2);
+
+            const w = canvas.offsetWidth;
+            const h = canvas.offsetHeight;
+
+            ctx.fillStyle = '#0a0a1a';
+            ctx.fillRect(0, 0, w, h);
+
+            // Underlying unity (curved line connecting)
+            ctx.strokeStyle = 'rgba(155, 89, 182, 0.3)';
+            ctx.lineWidth = 40;
+            ctx.beginPath();
+            ctx.moveTo(w * 0.2, h / 2);
+            ctx.quadraticCurveTo(w / 2, h * 0.2, w * 0.8, h / 2);
+            ctx.stroke();
+
+            // ER bridge representation
+            ctx.strokeStyle = '#9b59b6';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(w * 0.2, h / 2);
+            ctx.quadraticCurveTo(w / 2, h * 0.3, w * 0.8, h / 2);
+            ctx.stroke();
+
+            // Particle A
+            ctx.beginPath();
+            ctx.arc(w * 0.2, h / 2, 25, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(124, 179, 255, 0.3)';
+            ctx.fill();
+            ctx.strokeStyle = '#7cb3ff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = '#7cb3ff';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('A', w * 0.2, h / 2 + 5);
+
+            // Particle B
+            ctx.beginPath();
+            ctx.arc(w * 0.8, h / 2, 25, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(124, 179, 255, 0.3)';
+            ctx.fill();
+            ctx.strokeStyle = '#7cb3ff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = '#7cb3ff';
+            ctx.fillText('B', w * 0.8, h / 2 + 5);
+
+            // Labels
+            ctx.fillStyle = '#889';
+            ctx.font = '11px sans-serif';
+            ctx.fillText('"Separate" particles', w / 2, h - 50);
+            ctx.fillText('(observer perception)', w / 2, h - 35);
+
+            ctx.fillStyle = '#9b59b6';
+            ctx.fillText('ER Bridge / Underlying Unity', w / 2, h * 0.25);
+
+            // Apparent distance
+            ctx.strokeStyle = '#889';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 3]);
+            ctx.beginPath();
+            ctx.moveTo(w * 0.25, h / 2 + 40);
+            ctx.lineTo(w * 0.75, h / 2 + 40);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = '#889';
+            ctx.font = '10px sans-serif';
+            ctx.fillText('Apparent spatial separation', w / 2, h / 2 + 55);
+            ctx.fillText('(drag-bound perception)', w / 2, h / 2 + 68);
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            drawDerivation();
+            drawBlackholeDetailed();
+            drawEntanglement();
+        });
+
+        window.addEventListener('resize', () => {
+            drawDerivation();
+            drawBlackholeDetailed();
+            drawEntanglement();
+        });
+    </script>
+</body>
+</html>

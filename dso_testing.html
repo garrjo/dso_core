@@ -1,0 +1,1824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSO - Prospective Testing Framework</title>
+    <link rel="stylesheet" href="shared/styles.css">
+    <script src="shared/nav.js"></script>
+    <!-- OpenTimestamps Library -->
+    <script src="https://unpkg.com/javascript-opentimestamps@0.4.9/dist/opentimestamps.min.js"></script>
+    <style>
+        /* Password Gate */
+        .password-gate {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .password-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            max-width: 400px;
+        }
+
+        .password-box h2 {
+            color: var(--accent-blue);
+            margin-bottom: 10px;
+        }
+
+        .password-box p {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 12px 15px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1em;
+            margin-bottom: 15px;
+        }
+
+        .password-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        .password-submit {
+            width: 100%;
+            padding: 12px;
+            background: var(--accent-blue);
+            border: none;
+            border-radius: 8px;
+            color: #000;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .password-error {
+            color: var(--accent-red);
+            font-size: 0.85em;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .main-content {
+            display: none;
+        }
+
+        .main-content.unlocked {
+            display: block;
+        }
+
+        /* Testing Header */
+        .testing-header {
+            background: linear-gradient(135deg, rgba(78, 205, 196, 0.1), rgba(124, 179, 255, 0.1));
+            border: 2px solid var(--accent-blue);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        .testing-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .testing-title .icon { font-size: 2.5em; }
+        .testing-title h2 { font-size: 1.8em; color: var(--accent-blue); }
+
+        .methodology-box {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-blue);
+            padding: 15px 20px;
+            margin-top: 15px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.2em;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label { font-size: 0.85em; color: var(--text-secondary); }
+        .stat-sublabel { font-size: 0.75em; color: var(--text-secondary); margin-top: 3px; }
+
+        /* Prediction Cards */
+        .prediction-card {
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--border-color);
+        }
+
+        .prediction-card.hit { border-left-color: var(--accent-green); }
+        .prediction-card.near { border-left-color: var(--accent-yellow); }
+        .prediction-card.miss { border-left-color: var(--accent-red); }
+        .prediction-card.active { border-left-color: var(--accent-orange); }
+        .prediction-card.pending { border-left-color: var(--accent-purple); }
+
+        .prediction-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .prediction-id { font-weight: 700; font-size: 0.9em; }
+
+        .prediction-status {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.75em;
+            font-weight: 700;
+        }
+
+        .status-active { background: var(--accent-orange); color: #000; }
+        .status-pending { background: var(--accent-purple); color: #fff; }
+        .status-hit { background: var(--accent-green); color: #000; }
+        .status-near { background: var(--accent-yellow); color: #000; }
+        .status-miss { background: var(--accent-red); color: #fff; }
+        .status-timestamped { background: var(--accent-blue); color: #000; }
+
+        .prediction-region { font-size: 1.1em; font-weight: 600; margin-bottom: 8px; }
+
+        .prediction-details {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 12px 0;
+            padding: 12px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+        }
+
+        .detail-item { text-align: center; }
+        .detail-label { font-size: 0.7em; color: var(--text-secondary); text-transform: uppercase; }
+        .detail-value { font-size: 1em; font-weight: 600; margin-top: 3px; }
+        .detail-value.pass { color: var(--accent-green); }
+        .detail-value.fail { color: var(--accent-red); }
+
+        .prediction-basis {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            font-style: italic;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .timestamp-proof {
+            background: var(--bg-secondary);
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 0.75em;
+            word-break: break-all;
+        }
+
+        .timestamp-proof .label {
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        /* Tabs */
+        .section-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .tab-btn {
+            background: var(--bg-tertiary);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px 8px 0 0;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .tab-btn.active { background: var(--accent-blue); color: #000; font-weight: 600; }
+        .tab-btn:hover:not(.active) { background: var(--bg-secondary); color: var(--text-primary); }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Create Prediction Form */
+        .create-form {
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 0.85em; color: var(--text-secondary); }
+
+        .form-group input, .form-group select, .form-group textarea {
+            padding: 10px 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 0.9em;
+        }
+
+        .form-group textarea { resize: vertical; min-height: 80px; }
+
+        .btn-create {
+            background: var(--accent-green);
+            color: #000;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        .btn-create:hover { opacity: 0.9; }
+
+        .btn-timestamp {
+            background: var(--accent-blue);
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85em;
+            margin-left: 10px;
+        }
+
+        /* Validation Grid */
+        .validation-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .validation-item {
+            background: var(--bg-secondary);
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        /* Live indicator */
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        /* Climatology Table */
+        .climatology-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .climatology-table th, .climatology-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .climatology-table th { background: var(--bg-tertiary); color: var(--accent-blue); font-weight: 600; }
+        .climatology-table tr:hover { background: var(--bg-tertiary); }
+
+        /* BSS Interpretation */
+        .bss-interpretation {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .bss-level {
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.85em;
+        }
+
+        /* Export/Import */
+        .data-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn-action {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 6px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+
+        .btn-action:hover { background: var(--bg-secondary); }
+    </style>
+</head>
+<body data-dso-page="testing">
+    <!-- Password Gate -->
+    <div class="password-gate" id="passwordGate">
+        <div class="password-box">
+            <h2>&#128274; DSO Testing Framework</h2>
+            <p>This is a private research environment.<br>Enter access code to continue.</p>
+            <input type="password" class="password-input" id="passwordInput" placeholder="Access Code" autofocus>
+            <button class="password-submit" onclick="checkPassword()">Enter</button>
+            <div class="password-error" id="passwordError">Invalid access code</div>
+        </div>
+    </div>
+
+    <!-- Main Content (hidden until authenticated) -->
+    <div class="main-content" id="mainContent">
+        <nav id="main-nav"></nav>
+
+        <div class="page-container">
+            <div class="page-header">
+                <h1>Prospective Testing Framework</h1>
+                <p class="subtitle">Blockchain-timestamped predictions with narrow constraints - Started Dec 7, 2025</p>
+            </div>
+
+            <!-- Methodology Header -->
+            <div class="testing-header">
+                <div class="testing-title">
+                    <span class="icon">&#128300;</span>
+                    <h2>Scientific Validation Protocol</h2>
+                </div>
+                <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                    All predictions are cryptographically timestamped using <strong>OpenTimestamps</strong> (Bitcoin blockchain)
+                    before any event occurs. This provides independently verifiable proof of prediction timing.
+                </p>
+                <div class="methodology-box">
+                    <strong style="color: var(--accent-blue);">Validation Criteria:</strong>
+                    <ul style="margin: 10px 0 0 20px; color: var(--text-secondary);">
+                        <li><strong>Location:</strong> ±200km from predicted epicenter (Haversine distance)</li>
+                        <li><strong>Timing:</strong> ±3 days from predicted date</li>
+                        <li><strong>Magnitude:</strong> ±0.3 from predicted magnitude</li>
+                        <li><strong>All three criteria must pass</strong> for a HIT</li>
+                        <li><strong>Timestamps:</strong> SHA-256 hash submitted to Bitcoin blockchain via OpenTimestamps</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Statistics Overview -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalPredictions" style="color: var(--accent-blue);">0</div>
+                    <div class="stat-label">Total Predictions</div>
+                    <div class="stat-sublabel">Since Dec 7, 2025</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="hitRate" style="color: var(--accent-green);">--</div>
+                    <div class="stat-label">Narrow Hit Rate</div>
+                    <div class="stat-sublabel">±200km, ±3d, ±0.3M</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="bssScore" style="color: var(--accent-blue);">--</div>
+                    <div class="stat-label">Brier Skill Score</div>
+                    <div class="stat-sublabel">vs Climatology</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="timestamped" style="color: var(--accent-purple);">0</div>
+                    <div class="stat-label">Timestamped</div>
+                    <div class="stat-sublabel">Blockchain verified</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="awaitingValidation" style="color: var(--accent-orange);">0</div>
+                    <div class="stat-label">Awaiting</div>
+                    <div class="stat-sublabel">Validation</div>
+                </div>
+            </div>
+
+            <!-- Data Actions -->
+            <div class="data-actions">
+                <button class="btn-action" onclick="exportData()">&#128190; Export All Data</button>
+                <button class="btn-action" onclick="document.getElementById('importFile').click()">&#128194; Import Data</button>
+                <input type="file" id="importFile" style="display:none" accept=".json" onchange="importData(event)">
+                <button class="btn-action" onclick="downloadTimestampProofs()">&#128220; Download Proofs</button>
+                <button class="btn-action" onclick="clearAllData()" style="background: var(--accent-red); color: #fff;">&#128465; Clear All & Reset</button>
+            </div>
+
+            <!-- Tabbed Content -->
+            <div class="section-tabs">
+                <button class="tab-btn active" data-tab="create">Create Prediction</button>
+                <button class="tab-btn" data-tab="active">Active Predictions</button>
+                <button class="tab-btn" data-tab="validated">Validated Results</button>
+                <button class="tab-btn" data-tab="climatology">Climatology Data</button>
+            </div>
+
+            <!-- Create Prediction Tab -->
+            <div class="tab-content active" id="tab-create">
+                <div class="card">
+                    <div class="card-header">
+                        <h2><span class="icon">&#10133;</span> Create New Prediction</h2>
+                        <span class="badge" style="background: var(--accent-green); color: #000;">PROSPECTIVE</span>
+                    </div>
+                    <div class="create-form">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Predicted Date</label>
+                                <input type="date" id="predDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Latitude</label>
+                                <input type="number" id="predLat" step="0.01" min="-90" max="90" placeholder="e.g., 7.5">
+                            </div>
+                            <div class="form-group">
+                                <label>Longitude</label>
+                                <input type="number" id="predLon" step="0.01" min="-180" max="180" placeholder="e.g., 126.8">
+                            </div>
+                            <div class="form-group">
+                                <label>Predicted Magnitude</label>
+                                <input type="number" id="predMag" step="0.1" min="4" max="10" placeholder="e.g., 6.5">
+                            </div>
+                            <div class="form-group">
+                                <label>Probability (0-1)</label>
+                                <input type="number" id="predProb" step="0.01" min="0" max="1" placeholder="e.g., 0.35">
+                            </div>
+                            <div class="form-group">
+                                <label>Region Name</label>
+                                <input type="text" id="predRegion" placeholder="e.g., Philippines - Mindanao">
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label>Scientific Basis</label>
+                            <textarea id="predBasis" placeholder="Describe the scientific reasoning: lunar phase, tidal stress, fault conditions, etc."></textarea>
+                        </div>
+                        <button class="btn-create" onclick="createPrediction()">
+                            &#128203; Create & Timestamp Prediction
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Predictions Tab -->
+            <div class="tab-content" id="tab-active">
+                <!-- Auto-Validation Status -->
+                <div class="card" style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(78, 205, 196, 0.1), rgba(124, 179, 255, 0.05));">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong style="color: var(--accent-green);">&#9889; Automatic USGS Validation</strong>
+                            <p id="autoValidateStatus" style="font-size: 0.85em; color: var(--text-secondary); margin-top: 5px;">
+                                Initializing...
+                            </p>
+                        </div>
+                        <button class="btn-action" onclick="autoValidateAll()">
+                            &#128260; Check Now
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Potential Matches -->
+                <div class="card" style="margin-bottom: 20px;">
+                    <div class="card-header">
+                        <h2><span class="icon">&#128269;</span> Potential Matches</h2>
+                        <span class="badge" style="background: var(--accent-yellow); color: #000;">REVIEW</span>
+                    </div>
+                    <div id="potentialMatches">
+                        <p style="color: var(--text-secondary); font-style: italic;">Checking for matches...</p>
+                    </div>
+                </div>
+
+                <!-- Active Predictions -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>
+                            <span class="live-indicator">
+                                <span class="live-dot"></span>
+                                Active Predictions Awaiting Validation
+                            </span>
+                        </h2>
+                        <span class="badge" style="background: var(--accent-orange); color: #000;">MONITORING</span>
+                    </div>
+                    <div id="activePredictions">
+                        <p style="color: var(--text-secondary); font-style: italic;">No active predictions yet. Create your first prediction to begin tracking.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Validated Results Tab -->
+            <div class="tab-content" id="tab-validated">
+                <div class="card">
+                    <div class="card-header">
+                        <h2><span class="icon">&#9989;</span> Validated Predictions</h2>
+                        <span class="badge">Results</span>
+                    </div>
+                    <div id="validatedPredictions">
+                        <p style="color: var(--text-secondary); font-style: italic;">No validated predictions yet. Predictions will appear here after events occur and are validated.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Climatology Tab -->
+            <div class="tab-content" id="tab-climatology">
+                <div class="card">
+                    <div class="card-header">
+                        <h2><span class="icon">&#128200;</span> Regional Climatology Baseline</h2>
+                        <span class="badge">USGS 30-Year Averages</span>
+                    </div>
+                    <p style="font-size: 0.9em; color: var(--text-secondary); margin-bottom: 15px;">
+                        Climatological probability = historical frequency of M6+ earthquakes per region.
+                        The model must outperform these base rates to demonstrate genuine skill.
+                    </p>
+                    <table class="climatology-table">
+                        <thead>
+                            <tr>
+                                <th>Region</th>
+                                <th>M6+ per Year</th>
+                                <th>Monthly Prob.</th>
+                                <th>Weekly Prob.</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="climatologyTable"></tbody>
+                    </table>
+                </div>
+
+                <!-- BSS Interpretation -->
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-header">
+                        <h2><span class="icon">&#128202;</span> Brier Skill Score Interpretation</h2>
+                    </div>
+                    <div class="bss-interpretation">
+                        <div class="bss-level" style="background: rgba(231, 76, 60, 0.3); border: 1px solid var(--accent-red);">
+                            <div style="font-weight: 700; color: var(--accent-red);">BSS &lt; 0</div>
+                            <div style="font-size: 0.8em; color: var(--text-secondary);">Worse than random</div>
+                        </div>
+                        <div class="bss-level" style="background: rgba(243, 156, 18, 0.3); border: 1px solid var(--accent-orange);">
+                            <div style="font-weight: 700; color: var(--accent-orange);">BSS = 0</div>
+                            <div style="font-size: 0.8em; color: var(--text-secondary);">Same as climatology</div>
+                        </div>
+                        <div class="bss-level" style="background: rgba(241, 196, 15, 0.3); border: 1px solid var(--accent-yellow);">
+                            <div style="font-weight: 700; color: var(--accent-yellow);">BSS 0.1-0.2</div>
+                            <div style="font-size: 0.8em; color: var(--text-secondary);">Marginal skill</div>
+                        </div>
+                        <div class="bss-level" style="background: rgba(46, 204, 113, 0.3); border: 1px solid var(--accent-green);">
+                            <div style="font-weight: 700; color: var(--accent-green);">BSS 0.2-0.4</div>
+                            <div style="font-size: 0.8em; color: var(--text-secondary);">Good skill</div>
+                        </div>
+                        <div class="bss-level" style="background: rgba(78, 205, 196, 0.3); border: 1px solid var(--accent-blue);">
+                            <div style="font-weight: 700; color: var(--accent-blue);">BSS &gt; 0.4</div>
+                            <div style="font-size: 0.8em; color: var(--text-secondary);">Excellent skill</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =====================================================
+        // PASSWORD PROTECTION
+        // =====================================================
+        const ACCESS_CODE_HASH = 'f1c1289424883b9abe2e23d183257a47234e7cd67067dff9a13bfa9aa8bb4a42'; // SHA-256 of 'dso2025'
+
+        async function hashPassword(password) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        async function checkPassword() {
+            const password = document.getElementById('passwordInput').value;
+            const hash = await hashPassword(password);
+
+            if (hash === ACCESS_CODE_HASH) {
+                document.getElementById('passwordGate').style.display = 'none';
+                document.getElementById('mainContent').classList.add('unlocked');
+                sessionStorage.setItem('dso_authenticated', 'true');
+                initApp();
+            } else {
+                document.getElementById('passwordError').style.display = 'block';
+                document.getElementById('passwordInput').value = '';
+            }
+        }
+
+        document.getElementById('passwordInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkPassword();
+        });
+
+        // Check if already authenticated this session
+        if (sessionStorage.getItem('dso_authenticated') === 'true') {
+            document.getElementById('passwordGate').style.display = 'none';
+            document.getElementById('mainContent').classList.add('unlocked');
+        }
+
+        // =====================================================
+        // CLIMATOLOGY DATA (USGS 30-year averages)
+        // =====================================================
+        const CLIMATOLOGY = {
+            'Philippines': { yearly: 5.2, monthly: 0.43, weekly: 0.10, notes: 'High subduction activity' },
+            'Japan': { yearly: 6.1, monthly: 0.51, weekly: 0.12, notes: 'Triple junction, very active' },
+            'Indonesia': { yearly: 7.3, monthly: 0.61, weekly: 0.14, notes: 'Sunda Arc, most active region' },
+            'Chile': { yearly: 4.1, monthly: 0.34, weekly: 0.08, notes: 'Nazca subduction' },
+            'Alaska': { yearly: 4.0, monthly: 0.33, weekly: 0.08, notes: 'Aleutian subduction' },
+            'Kamchatka': { yearly: 3.8, monthly: 0.32, weekly: 0.07, notes: 'Pacific plate subduction' },
+            'New Zealand': { yearly: 2.9, monthly: 0.24, weekly: 0.06, notes: 'Hikurangi subduction' },
+            'Mediterranean': { yearly: 1.8, monthly: 0.15, weekly: 0.03, notes: 'Africa-Eurasia collision' },
+            'Myanmar': { yearly: 1.2, monthly: 0.10, weekly: 0.02, notes: 'Sagaing Fault system' },
+            'California': { yearly: 1.5, monthly: 0.12, weekly: 0.03, notes: 'San Andreas system' },
+            'Global': { yearly: 120, monthly: 10.0, weekly: 2.3, notes: 'Worldwide M6+ average' }
+        };
+
+        // =====================================================
+        // DATA STORAGE
+        // =====================================================
+        const STORAGE_KEY = 'dso_predictions_v1';
+
+        let predictions = [];
+
+        function loadPredictions() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                predictions = JSON.parse(stored);
+            }
+        }
+
+        function savePredictions() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(predictions));
+        }
+
+        // =====================================================
+        // TIMESTAMPING (OpenTimestamps)
+        // =====================================================
+        async function createTimestamp(data) {
+            const jsonStr = JSON.stringify(data);
+            const encoder = new TextEncoder();
+            const dataBuffer = encoder.encode(jsonStr);
+
+            // Create SHA-256 hash
+            const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+            const timestamp = {
+                hash: hashHex,
+                algorithm: 'SHA-256',
+                created: new Date().toISOString(),
+                data: jsonStr,
+                otsProof: null,
+                otsStatus: 'pending',
+                calendars: []
+            };
+
+            // Submit to OpenTimestamps calendar servers
+            try {
+                if (typeof OpenTimestamps !== 'undefined') {
+                    const detached = OpenTimestamps.DetachedTimestampFile.fromHash(
+                        new OpenTimestamps.Ops.OpSHA256(),
+                        hashArray
+                    );
+
+                    // Stamp using public calendar servers
+                    await OpenTimestamps.stamp(detached);
+
+                    // Serialize the proof
+                    const otsBytes = detached.serializeToBytes();
+                    timestamp.otsProof = btoa(String.fromCharCode(...otsBytes));
+                    timestamp.otsStatus = 'stamped';
+                    timestamp.calendars = ['alice.btc.calendar.opentimestamps.org', 'bob.btc.calendar.opentimestamps.org'];
+                    console.log('OpenTimestamps proof created successfully');
+                } else {
+                    console.warn('OpenTimestamps library not loaded, using hash-only timestamp');
+                    timestamp.otsStatus = 'hash-only';
+                    timestamp.note = 'OpenTimestamps library unavailable - hash preserved for manual submission';
+                }
+            } catch (err) {
+                console.error('OpenTimestamps error:', err);
+                timestamp.otsStatus = 'error';
+                timestamp.error = err.message;
+                timestamp.note = 'Failed to submit to calendar - hash preserved for manual verification';
+            }
+
+            return timestamp;
+        }
+
+        // Verify an existing timestamp
+        async function verifyTimestamp(prediction) {
+            if (!prediction.timestamp || !prediction.timestamp.otsProof) {
+                return { verified: false, status: 'no-proof', message: 'No OTS proof available' };
+            }
+
+            try {
+                if (typeof OpenTimestamps === 'undefined') {
+                    return { verified: false, status: 'no-library', message: 'OpenTimestamps library not loaded' };
+                }
+
+                // Deserialize the proof
+                const otsBytes = Uint8Array.from(atob(prediction.timestamp.otsProof), c => c.charCodeAt(0));
+                const detached = OpenTimestamps.DetachedTimestampFile.deserialize(otsBytes);
+
+                // Verify against Bitcoin blockchain
+                const result = await OpenTimestamps.verify(detached);
+
+                if (result) {
+                    return {
+                        verified: true,
+                        status: 'confirmed',
+                        bitcoinBlock: result,
+                        message: `Confirmed in Bitcoin block ${result}`
+                    };
+                } else {
+                    return {
+                        verified: false,
+                        status: 'pending',
+                        message: 'Timestamp pending Bitcoin confirmation (may take hours)'
+                    };
+                }
+            } catch (err) {
+                return { verified: false, status: 'error', message: err.message };
+            }
+        }
+
+        // Upgrade pending timestamps (call periodically or on demand)
+        async function upgradeTimestamp(prediction) {
+            if (!prediction.timestamp || !prediction.timestamp.otsProof) return null;
+
+            try {
+                if (typeof OpenTimestamps === 'undefined') return null;
+
+                const otsBytes = Uint8Array.from(atob(prediction.timestamp.otsProof), c => c.charCodeAt(0));
+                const detached = OpenTimestamps.DetachedTimestampFile.deserialize(otsBytes);
+
+                // Try to upgrade (get Bitcoin attestation)
+                const changed = await OpenTimestamps.upgrade(detached);
+
+                if (changed) {
+                    const newOtsBytes = detached.serializeToBytes();
+                    prediction.timestamp.otsProof = btoa(String.fromCharCode(...newOtsBytes));
+                    prediction.timestamp.otsStatus = 'upgraded';
+                    prediction.timestamp.upgradedAt = new Date().toISOString();
+                    savePredictions();
+                    return true;
+                }
+                return false;
+            } catch (err) {
+                console.error('Upgrade error:', err);
+                return null;
+            }
+        }
+
+        // =====================================================
+        // PREDICTION MANAGEMENT
+        // =====================================================
+        async function createPrediction() {
+            const predDate = document.getElementById('predDate').value;
+            const predLat = parseFloat(document.getElementById('predLat').value);
+            const predLon = parseFloat(document.getElementById('predLon').value);
+            const predMag = parseFloat(document.getElementById('predMag').value);
+            const predProb = parseFloat(document.getElementById('predProb').value);
+            const predRegion = document.getElementById('predRegion').value;
+            const predBasis = document.getElementById('predBasis').value;
+
+            if (!predDate || isNaN(predLat) || isNaN(predLon) || isNaN(predMag) || isNaN(predProb) || !predRegion) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const id = `DSO-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${String(predictions.length + 1).padStart(3, '0')}`;
+
+            const predictionData = {
+                id: id,
+                created: new Date().toISOString(),
+                type: 'event',
+                status: 'active',
+                prediction: {
+                    date: predDate,
+                    lat: predLat,
+                    lon: predLon,
+                    mag: predMag,
+                    region: predRegion,
+                    probability: predProb
+                },
+                tolerance: { km: 200, days: 3, mag: 0.3 },
+                basis: predBasis,
+                validation: null
+            };
+
+            // Create timestamp
+            const timestamp = await createTimestamp(predictionData);
+            predictionData.timestamp = timestamp;
+
+            predictions.push(predictionData);
+            savePredictions();
+
+            // Clear form
+            document.getElementById('predDate').value = '';
+            document.getElementById('predLat').value = '';
+            document.getElementById('predLon').value = '';
+            document.getElementById('predMag').value = '';
+            document.getElementById('predProb').value = '';
+            document.getElementById('predRegion').value = '';
+            document.getElementById('predBasis').value = '';
+
+            alert(`Prediction ${id} created and timestamped!\n\nHash: ${timestamp.hash}\n\nSave this hash and submit to OpenTimestamps for blockchain verification.`);
+
+            renderAll();
+        }
+
+        function validatePrediction(id, actualDate, actualLat, actualLon, actualMag, usgsId, notes) {
+            const pred = predictions.find(p => p.id === id);
+            if (!pred) return;
+
+            const distanceKm = haversineDistance(pred.prediction.lat, pred.prediction.lon, actualLat, actualLon);
+            const predDateObj = new Date(pred.prediction.date);
+            const actualDateObj = new Date(actualDate);
+            const daysDiff = Math.round((actualDateObj - predDateObj) / (1000 * 60 * 60 * 24));
+            const magDiff = actualMag - pred.prediction.mag;
+
+            const distPass = distanceKm <= pred.tolerance.km;
+            const timePass = Math.abs(daysDiff) <= pred.tolerance.days;
+            const magPass = Math.abs(magDiff) <= pred.tolerance.mag;
+
+            let result = 'MISS';
+            if (distPass && timePass && magPass) {
+                result = 'HIT';
+            } else if ((distPass && timePass) || (distPass && magPass) || (timePass && magPass)) {
+                result = 'NEAR';
+            }
+
+            pred.status = 'validated';
+            pred.validation = {
+                usgsId: usgsId,
+                actualDate: actualDate,
+                actualLat: actualLat,
+                actualLon: actualLon,
+                actualMag: actualMag,
+                distanceKm: Math.round(distanceKm),
+                daysDiff: daysDiff,
+                magDiff: magDiff,
+                result: result,
+                notes: notes,
+                validatedAt: new Date().toISOString()
+            };
+
+            savePredictions();
+            renderAll();
+        }
+
+        // =====================================================
+        // UTILITY FUNCTIONS
+        // =====================================================
+        function haversineDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        function formatDate(dateStr) {
+            return new Date(dateStr).toLocaleDateString('en-US', {
+                year: 'numeric', month: 'short', day: 'numeric'
+            });
+        }
+
+        // =====================================================
+        // RENDERING
+        // =====================================================
+        function renderActivePredictions() {
+            const container = document.getElementById('activePredictions');
+            const active = predictions.filter(p => p.status === 'active');
+
+            if (active.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-secondary); font-style: italic;">No active predictions yet. Create your first prediction to begin tracking.</p>';
+                return;
+            }
+
+            container.innerHTML = active.map(p => `
+                <div class="prediction-card active">
+                    <div class="prediction-header">
+                        <div>
+                            <span class="prediction-id" style="color: var(--accent-orange);">${p.id}</span>
+                            <span style="font-size: 0.8em; color: var(--text-secondary); margin-left: 10px;">
+                                Created: ${formatDate(p.created)}
+                            </span>
+                        </div>
+                        <div>
+                            <span class="prediction-status status-active">${(p.prediction.probability * 100).toFixed(0)}% conf</span>
+                            ${p.timestamp ? '<span class="prediction-status status-timestamped" style="margin-left: 5px;">TIMESTAMPED</span>' : ''}
+                        </div>
+                    </div>
+                    <div class="prediction-region">${p.prediction.region}</div>
+                    <div class="prediction-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Date</div>
+                            <div class="detail-value">${formatDate(p.prediction.date)}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Location</div>
+                            <div class="detail-value">${p.prediction.lat.toFixed(2)}°, ${p.prediction.lon.toFixed(2)}°</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Magnitude</div>
+                            <div class="detail-value">M${p.prediction.mag.toFixed(1)} ±${p.tolerance.mag}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Tolerances</div>
+                            <div class="detail-value" style="font-size: 0.85em;">±${p.tolerance.km}km, ±${p.tolerance.days}d</div>
+                        </div>
+                    </div>
+                    ${p.timestamp ? `
+                        <div class="timestamp-proof">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span class="label">SHA-256:</span>
+                                <span class="prediction-status" style="font-size: 0.7em; padding: 3px 8px; background: ${
+                                    p.timestamp.otsStatus === 'stamped' || p.timestamp.otsStatus === 'upgraded' ? 'var(--accent-green)' :
+                                    p.timestamp.otsStatus === 'confirmed' ? 'var(--accent-blue)' :
+                                    p.timestamp.otsStatus === 'pending' ? 'var(--accent-orange)' : 'var(--accent-red)'
+                                }; color: #000;">
+                                    ${p.timestamp.otsStatus === 'stamped' ? 'CALENDAR SUBMITTED' :
+                                      p.timestamp.otsStatus === 'upgraded' ? 'BITCOIN CONFIRMED' :
+                                      p.timestamp.otsStatus === 'confirmed' ? 'VERIFIED' :
+                                      p.timestamp.otsStatus === 'pending' ? 'PENDING' :
+                                      p.timestamp.otsStatus === 'hash-only' ? 'HASH ONLY' : 'ERROR'}
+                                </span>
+                            </div>
+                            <div style="word-break: break-all; font-size: 0.7em;">${p.timestamp.hash}</div>
+                            ${p.timestamp.calendars && p.timestamp.calendars.length > 0 ? `
+                                <div style="margin-top: 5px; font-size: 0.7em; color: var(--text-secondary);">
+                                    Calendars: ${p.timestamp.calendars.join(', ')}
+                                </div>
+                            ` : ''}
+                            <div style="margin-top: 8px;">
+                                <button class="btn-action" style="font-size: 0.75em; padding: 5px 10px;" onclick="verifyAndShowStatus('${p.id}')">Verify Timestamp</button>
+                                <button class="btn-action" style="font-size: 0.75em; padding: 5px 10px; margin-left: 5px;" onclick="tryUpgrade('${p.id}')">Upgrade</button>
+                                <button class="btn-action" style="font-size: 0.75em; padding: 5px 10px; margin-left: 5px;" onclick="downloadOtsProof('${p.id}')">Download .ots</button>
+                            </div>
+                        </div>
+                    ` : ''}
+                    <div class="prediction-basis">
+                        <strong>Basis:</strong> ${p.basis}
+                    </div>
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+                        <button class="btn-action" onclick="showValidationForm('${p.id}')">Validate This Prediction</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderValidatedPredictions() {
+            const container = document.getElementById('validatedPredictions');
+            const validated = predictions.filter(p => p.status === 'validated');
+
+            if (validated.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-secondary); font-style: italic;">No validated predictions yet.</p>';
+                return;
+            }
+
+            container.innerHTML = validated.map(p => {
+                const v = p.validation;
+                const resultClass = v.result.toLowerCase();
+
+                return `
+                    <div class="prediction-card ${resultClass}">
+                        <div class="prediction-header">
+                            <div>
+                                <span class="prediction-id">${p.id}</span>
+                                <span style="font-size: 0.8em; color: var(--text-secondary); margin-left: 10px;">
+                                    ${p.prediction.region}
+                                </span>
+                            </div>
+                            <span class="prediction-status status-${resultClass}">${v.result}</span>
+                        </div>
+                        <div class="prediction-details">
+                            <div class="detail-item">
+                                <div class="detail-label">Predicted</div>
+                                <div class="detail-value">${formatDate(p.prediction.date)}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Actual</div>
+                                <div class="detail-value">${formatDate(v.actualDate)}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Pred. Mag</div>
+                                <div class="detail-value">M${p.prediction.mag.toFixed(1)}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Actual Mag</div>
+                                <div class="detail-value">M${v.actualMag.toFixed(1)}</div>
+                            </div>
+                        </div>
+                        <div class="validation-grid">
+                            <div class="validation-item">
+                                <div class="detail-label">Distance</div>
+                                <div class="detail-value ${v.distanceKm <= p.tolerance.km ? 'pass' : 'fail'}">
+                                    ${v.distanceKm}km ${v.distanceKm <= p.tolerance.km ? '✓' : '✗'}
+                                </div>
+                            </div>
+                            <div class="validation-item">
+                                <div class="detail-label">Timing</div>
+                                <div class="detail-value ${Math.abs(v.daysDiff) <= p.tolerance.days ? 'pass' : 'fail'}">
+                                    ${v.daysDiff >= 0 ? '+' : ''}${v.daysDiff}d ${Math.abs(v.daysDiff) <= p.tolerance.days ? '✓' : '✗'}
+                                </div>
+                            </div>
+                            <div class="validation-item">
+                                <div class="detail-label">Magnitude</div>
+                                <div class="detail-value ${Math.abs(v.magDiff) <= p.tolerance.mag ? 'pass' : 'fail'}">
+                                    ${v.magDiff >= 0 ? '+' : ''}${v.magDiff.toFixed(1)} ${Math.abs(v.magDiff) <= p.tolerance.mag ? '✓' : '✗'}
+                                </div>
+                            </div>
+                        </div>
+                        ${p.timestamp ? `
+                            <div class="timestamp-proof">
+                                <span class="label">SHA-256:</span> ${p.timestamp.hash}
+                            </div>
+                        ` : ''}
+                        <div class="prediction-basis">
+                            <strong>USGS:</strong> ${v.usgsId} — ${v.notes || 'No notes'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderClimatologyTable() {
+            const tbody = document.getElementById('climatologyTable');
+            tbody.innerHTML = Object.entries(CLIMATOLOGY).map(([region, data]) => `
+                <tr>
+                    <td><strong>${region}</strong></td>
+                    <td>${data.yearly.toFixed(1)}</td>
+                    <td>${(data.monthly * 100).toFixed(0)}%</td>
+                    <td>${(data.weekly * 100).toFixed(0)}%</td>
+                    <td style="color: var(--text-secondary); font-size: 0.9em;">${data.notes}</td>
+                </tr>
+            `).join('');
+        }
+
+        function calculateStatistics() {
+            const total = predictions.length;
+            const validated = predictions.filter(p => p.status === 'validated');
+            const active = predictions.filter(p => p.status === 'active');
+            const timestamped = predictions.filter(p => p.timestamp).length;
+            const hits = validated.filter(p => p.validation.result === 'HIT').length;
+
+            document.getElementById('totalPredictions').textContent = total;
+            document.getElementById('timestamped').textContent = timestamped;
+            document.getElementById('awaitingValidation').textContent = active.length;
+
+            if (validated.length > 0) {
+                const hitRate = (hits / validated.length * 100).toFixed(0);
+                document.getElementById('hitRate').textContent = hitRate + '%';
+                document.getElementById('hitRate').style.color =
+                    hitRate >= 50 ? 'var(--accent-green)' : hitRate >= 30 ? 'var(--accent-yellow)' : 'var(--accent-red)';
+
+                // BSS Calculation
+                let brierSum = 0;
+                let climBrierSum = 0;
+                validated.forEach(p => {
+                    const outcome = p.validation.result === 'HIT' ? 1 : 0;
+                    brierSum += Math.pow(p.prediction.probability - outcome, 2);
+                    const regionKey = Object.keys(CLIMATOLOGY).find(k => p.prediction.region.includes(k)) || 'Global';
+                    const climProb = CLIMATOLOGY[regionKey].monthly;
+                    climBrierSum += Math.pow(climProb - outcome, 2);
+                });
+
+                const bss = climBrierSum > 0 ? (1 - brierSum / climBrierSum) : 0;
+                document.getElementById('bssScore').textContent = bss.toFixed(2);
+                document.getElementById('bssScore').style.color =
+                    bss > 0.2 ? 'var(--accent-green)' : bss > 0 ? 'var(--accent-yellow)' : 'var(--accent-red)';
+            }
+        }
+
+        function renderAll() {
+            renderActivePredictions();
+            renderValidatedPredictions();
+            calculateStatistics();
+        }
+
+        // =====================================================
+        // VALIDATION FORM
+        // =====================================================
+        function showValidationForm(predId) {
+            const pred = predictions.find(p => p.id === predId);
+            if (!pred) return;
+
+            const html = `
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 10000;">
+                    <div style="background: var(--bg-secondary); padding: 30px; border-radius: 12px; max-width: 500px; width: 90%;">
+                        <h3 style="color: var(--accent-blue); margin-bottom: 20px;">Validate: ${predId}</h3>
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label>Actual Date</label>
+                            <input type="date" id="valDate" class="form-group input" style="width: 100%; padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary);">
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                            <div class="form-group">
+                                <label>Actual Lat</label>
+                                <input type="number" id="valLat" step="0.01" style="width: 100%; padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary);">
+                            </div>
+                            <div class="form-group">
+                                <label>Actual Lon</label>
+                                <input type="number" id="valLon" step="0.01" style="width: 100%; padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary);">
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                            <div class="form-group">
+                                <label>Actual Magnitude</label>
+                                <input type="number" id="valMag" step="0.1" style="width: 100%; padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary);">
+                            </div>
+                            <div class="form-group">
+                                <label>USGS Event ID</label>
+                                <input type="text" id="valUsgs" placeholder="e.g., us7000nq2p" style="width: 100%; padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary);">
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label>Notes</label>
+                            <input type="text" id="valNotes" placeholder="Event description" style="width: 100%; padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary);">
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="submitValidation('${predId}')" style="flex: 1; padding: 12px; background: var(--accent-green); border: none; border-radius: 6px; color: #000; font-weight: 600; cursor: pointer;">Validate</button>
+                            <button onclick="this.closest('div[style*=fixed]').remove()" style="flex: 1; padding: 12px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary); cursor: pointer;">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', html);
+        }
+
+        function submitValidation(predId) {
+            const actualDate = document.getElementById('valDate').value;
+            const actualLat = parseFloat(document.getElementById('valLat').value);
+            const actualLon = parseFloat(document.getElementById('valLon').value);
+            const actualMag = parseFloat(document.getElementById('valMag').value);
+            const usgsId = document.getElementById('valUsgs').value;
+            const notes = document.getElementById('valNotes').value;
+
+            if (!actualDate || isNaN(actualLat) || isNaN(actualLon) || isNaN(actualMag)) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            validatePrediction(predId, actualDate, actualLat, actualLon, actualMag, usgsId, notes);
+            document.querySelector('div[style*="fixed"]').remove();
+        }
+
+        // =====================================================
+        // TIMESTAMP UI HELPERS
+        // =====================================================
+        async function verifyAndShowStatus(predId) {
+            const pred = predictions.find(p => p.id === predId);
+            if (!pred) return;
+
+            const result = await verifyTimestamp(pred);
+            alert(`Timestamp Verification for ${predId}\n\nStatus: ${result.status}\n${result.message}`);
+
+            if (result.verified) {
+                pred.timestamp.otsStatus = 'confirmed';
+                pred.timestamp.bitcoinBlock = result.bitcoinBlock;
+                savePredictions();
+                renderAll();
+            }
+        }
+
+        async function tryUpgrade(predId) {
+            const pred = predictions.find(p => p.id === predId);
+            if (!pred) return;
+
+            const result = await upgradeTimestamp(pred);
+            if (result === true) {
+                alert(`Timestamp upgraded! Bitcoin attestation obtained for ${predId}`);
+                renderAll();
+            } else if (result === false) {
+                alert('No upgrade available yet. Bitcoin confirmation typically takes a few hours.');
+            } else {
+                alert('Unable to upgrade timestamp. Try again later.');
+            }
+        }
+
+        function downloadOtsProof(predId) {
+            const pred = predictions.find(p => p.id === predId);
+            if (!pred || !pred.timestamp) {
+                alert('No timestamp data available');
+                return;
+            }
+
+            // Create downloadable proof package
+            const proofData = {
+                id: pred.id,
+                created: pred.created,
+                prediction: pred.prediction,
+                timestamp: pred.timestamp,
+                verificationInstructions: [
+                    '1. Save the SHA-256 hash: ' + pred.timestamp.hash,
+                    '2. The original data that was hashed is in the "data" field',
+                    '3. If otsProof is present, decode from base64 and save as .ots file',
+                    '4. Verify at https://opentimestamps.org or using ots-cli',
+                    '5. The timestamp proves this prediction existed BEFORE the claimed time'
+                ]
+            };
+
+            const blob = new Blob([JSON.stringify(proofData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${pred.id}-timestamp-proof.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            // If we have binary OTS proof, also offer that
+            if (pred.timestamp.otsProof) {
+                try {
+                    const otsBytes = Uint8Array.from(atob(pred.timestamp.otsProof), c => c.charCodeAt(0));
+                    const otsBlob = new Blob([otsBytes], { type: 'application/octet-stream' });
+                    const otsUrl = URL.createObjectURL(otsBlob);
+                    const otsA = document.createElement('a');
+                    otsA.href = otsUrl;
+                    otsA.download = `${pred.id}.ots`;
+                    setTimeout(() => {
+                        otsA.click();
+                        URL.revokeObjectURL(otsUrl);
+                    }, 500);
+                } catch (e) {
+                    console.error('Error creating OTS file:', e);
+                }
+            }
+        }
+
+        // =====================================================
+        // AUTOMATIC USGS VALIDATION
+        // =====================================================
+        const USGS_API = 'https://earthquake.usgs.gov/fdsnws/event/1/query';
+        let recentEarthquakes = [];
+        let lastUSGSFetch = null;
+
+        async function fetchUSGSEarthquakes() {
+            // Fetch M4.5+ earthquakes from past 30 days
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - 30);
+
+            const url = `${USGS_API}?format=geojson&minmagnitude=4.5&starttime=${startDate.toISOString()}&endtime=${endDate.toISOString()}&orderby=time`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                recentEarthquakes = data.features.map(f => ({
+                    id: f.id,
+                    time: new Date(f.properties.time),
+                    lat: f.geometry.coordinates[1],
+                    lon: f.geometry.coordinates[0],
+                    mag: f.properties.mag,
+                    place: f.properties.place,
+                    url: f.properties.url
+                }));
+                lastUSGSFetch = new Date();
+                console.log(`Fetched ${recentEarthquakes.length} earthquakes from USGS`);
+                return recentEarthquakes;
+            } catch (err) {
+                console.error('USGS fetch error:', err);
+                return [];
+            }
+        }
+
+        function findMatchingEarthquakes(prediction) {
+            const matches = [];
+            const predDate = new Date(prediction.prediction.date);
+            const tolerance = prediction.tolerance;
+
+            for (const eq of recentEarthquakes) {
+                const distanceKm = haversineDistance(
+                    prediction.prediction.lat, prediction.prediction.lon,
+                    eq.lat, eq.lon
+                );
+                const daysDiff = Math.round((eq.time - predDate) / (1000 * 60 * 60 * 24));
+                const magDiff = eq.mag - prediction.prediction.mag;
+
+                const distPass = distanceKm <= tolerance.km;
+                const timePass = Math.abs(daysDiff) <= tolerance.days;
+                const magPass = Math.abs(magDiff) <= tolerance.mag;
+
+                // Calculate match score
+                let score = 0;
+                if (distPass) score++;
+                if (timePass) score++;
+                if (magPass) score++;
+
+                if (score >= 1) {
+                    matches.push({
+                        earthquake: eq,
+                        distanceKm: Math.round(distanceKm),
+                        daysDiff,
+                        magDiff,
+                        distPass,
+                        timePass,
+                        magPass,
+                        score,
+                        isHit: score === 3,
+                        isNear: score === 2
+                    });
+                }
+            }
+
+            // Sort by score (best matches first), then by distance
+            return matches.sort((a, b) => {
+                if (b.score !== a.score) return b.score - a.score;
+                return a.distanceKm - b.distanceKm;
+            });
+        }
+
+        async function autoValidateAll() {
+            const statusEl = document.getElementById('autoValidateStatus');
+            if (statusEl) statusEl.textContent = 'Fetching USGS data...';
+
+            await fetchUSGSEarthquakes();
+
+            const active = predictions.filter(p => p.status === 'active');
+            let validated = 0;
+            let potentialMatches = [];
+
+            for (const pred of active) {
+                const matches = findMatchingEarthquakes(pred);
+
+                // Auto-validate if there's a clear HIT
+                const hit = matches.find(m => m.isHit);
+                if (hit) {
+                    validatePrediction(
+                        pred.id,
+                        hit.earthquake.time.toISOString().slice(0, 10),
+                        hit.earthquake.lat,
+                        hit.earthquake.lon,
+                        hit.earthquake.mag,
+                        hit.earthquake.id,
+                        `Auto-validated: ${hit.earthquake.place}`
+                    );
+                    validated++;
+                } else if (matches.length > 0) {
+                    potentialMatches.push({ prediction: pred, matches });
+                }
+            }
+
+            if (statusEl) {
+                statusEl.textContent = `Last check: ${new Date().toLocaleTimeString()} | ${validated} auto-validated | ${potentialMatches.length} potential matches`;
+            }
+
+            renderAll();
+            renderPotentialMatches(potentialMatches);
+
+            return { validated, potentialMatches };
+        }
+
+        function renderPotentialMatches(potentialMatches) {
+            const container = document.getElementById('potentialMatches');
+            if (!container) return;
+
+            if (potentialMatches.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-secondary); font-style: italic;">No potential matches found. System will auto-check periodically.</p>';
+                return;
+            }
+
+            container.innerHTML = potentialMatches.map(({ prediction, matches }) => `
+                <div class="prediction-card" style="border-left-color: var(--accent-yellow);">
+                    <div class="prediction-header">
+                        <span class="prediction-id">${prediction.id}</span>
+                        <span class="prediction-status status-pending">${matches.length} POTENTIAL</span>
+                    </div>
+                    <div class="prediction-region">${prediction.prediction.region}</div>
+                    <div style="margin-top: 10px;">
+                        ${matches.slice(0, 3).map(m => `
+                            <div style="background: var(--bg-secondary); padding: 10px; border-radius: 6px; margin-bottom: 8px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <strong style="color: ${m.isNear ? 'var(--accent-yellow)' : 'var(--text-secondary)'};">
+                                        M${m.earthquake.mag.toFixed(1)} - ${m.earthquake.place}
+                                    </strong>
+                                    <span style="font-size: 0.8em; color: var(--text-secondary);">
+                                        ${m.earthquake.time.toLocaleDateString()}
+                                    </span>
+                                </div>
+                                <div style="display: flex; gap: 15px; margin-top: 8px; font-size: 0.85em;">
+                                    <span class="${m.distPass ? 'pass' : 'fail'}">${m.distanceKm}km ${m.distPass ? '✓' : '✗'}</span>
+                                    <span class="${m.timePass ? 'pass' : 'fail'}">${m.daysDiff >= 0 ? '+' : ''}${m.daysDiff}d ${m.timePass ? '✓' : '✗'}</span>
+                                    <span class="${m.magPass ? 'pass' : 'fail'}">${m.magDiff >= 0 ? '+' : ''}${m.magDiff.toFixed(1)}M ${m.magPass ? '✓' : '✗'}</span>
+                                </div>
+                                <div style="margin-top: 8px;">
+                                    <button class="btn-action" style="font-size: 0.75em;" onclick="manualValidate('${prediction.id}', '${m.earthquake.id}')">
+                                        Accept as ${m.isNear ? 'NEAR' : 'MISS'}
+                                    </button>
+                                    <a href="${m.earthquake.url}" target="_blank" class="btn-action" style="font-size: 0.75em; text-decoration: none; display: inline-block;">
+                                        View on USGS
+                                    </a>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function manualValidate(predId, eqId) {
+            const eq = recentEarthquakes.find(e => e.id === eqId);
+            if (!eq) {
+                alert('Earthquake data not found. Please refresh.');
+                return;
+            }
+
+            validatePrediction(
+                predId,
+                eq.time.toISOString().slice(0, 10),
+                eq.lat,
+                eq.lon,
+                eq.mag,
+                eq.id,
+                `Manual validation: ${eq.place}`
+            );
+
+            renderAll();
+            autoValidateAll(); // Refresh matches
+        }
+
+        // Auto-check every 5 minutes
+        function startAutoValidation() {
+            autoValidateAll();
+            setInterval(autoValidateAll, 5 * 60 * 1000);
+        }
+
+        // =====================================================
+        // CLEAR DATA
+        // =====================================================
+        function clearAllData() {
+            if (!confirm('Are you sure you want to delete ALL predictions? This cannot be undone.')) {
+                return;
+            }
+            if (!confirm('FINAL WARNING: All timestamped predictions will be permanently lost. Continue?')) {
+                return;
+            }
+            predictions = [];
+            savePredictions();
+            renderAll();
+            alert('All data cleared. Fresh predictions will be generated on next cycle.');
+        }
+
+        // =====================================================
+        // EXPORT/IMPORT
+        // =====================================================
+        function exportData() {
+            const data = {
+                version: '1.0',
+                exported: new Date().toISOString(),
+                predictions: predictions
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `dso-predictions-${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.predictions) {
+                        predictions = data.predictions;
+                        savePredictions();
+                        renderAll();
+                        alert(`Imported ${predictions.length} predictions`);
+                    }
+                } catch (err) {
+                    alert('Error importing file: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function downloadTimestampProofs() {
+            const proofs = predictions
+                .filter(p => p.timestamp)
+                .map(p => ({
+                    id: p.id,
+                    created: p.created,
+                    prediction: p.prediction,
+                    timestamp: p.timestamp
+                }));
+
+            const blob = new Blob([JSON.stringify(proofs, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `dso-timestamp-proofs-${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // =====================================================
+        // TAB NAVIGATION
+        // =====================================================
+        function initTabs() {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+                });
+            });
+        }
+
+        // =====================================================
+        // AUTOMATIC PREDICTION GENERATION (DSO Model)
+        // =====================================================
+        const DSO_REGIONS = [
+            { name: 'Philippines - Mindanao', lat: 7.5, lon: 126.5, baseProb: 0.43, notes: 'High subduction activity' },
+            { name: 'Philippines - Luzon', lat: 16.0, lon: 121.0, baseProb: 0.38, notes: 'Manila Trench' },
+            { name: 'Japan - Honshu', lat: 36.0, lon: 140.0, baseProb: 0.51, notes: 'Pacific plate subduction' },
+            { name: 'Japan - Hokkaido', lat: 42.5, lon: 143.0, baseProb: 0.45, notes: 'Kuril Trench' },
+            { name: 'Indonesia - Sumatra', lat: 0.5, lon: 100.0, baseProb: 0.55, notes: 'Sunda megathrust' },
+            { name: 'Indonesia - Java', lat: -7.5, lon: 110.0, baseProb: 0.48, notes: 'Java Trench' },
+            { name: 'Indonesia - Sulawesi', lat: -1.5, lon: 121.0, baseProb: 0.42, notes: 'Complex tectonics' },
+            { name: 'Chile - Central', lat: -33.0, lon: -71.5, baseProb: 0.34, notes: 'Nazca subduction' },
+            { name: 'Chile - Northern', lat: -23.0, lon: -70.0, baseProb: 0.32, notes: 'Atacama segment' },
+            { name: 'Alaska - Aleutians', lat: 52.0, lon: -175.0, baseProb: 0.33, notes: 'Aleutian subduction' },
+            { name: 'Kamchatka', lat: 53.0, lon: 159.0, baseProb: 0.32, notes: 'Pacific plate subduction' },
+            { name: 'New Zealand - North Island', lat: -39.0, lon: 176.0, baseProb: 0.24, notes: 'Hikurangi subduction' },
+            { name: 'Papua New Guinea', lat: -5.5, lon: 147.0, baseProb: 0.40, notes: 'Complex plate boundary' },
+            { name: 'Tonga-Kermadec', lat: -20.0, lon: -175.0, baseProb: 0.38, notes: 'Deep subduction' },
+            { name: 'Mexico - Oaxaca', lat: 16.0, lon: -96.0, baseProb: 0.28, notes: 'Cocos plate subduction' },
+            { name: 'Peru', lat: -15.0, lon: -75.0, baseProb: 0.30, notes: 'Nazca subduction' },
+            { name: 'Taiwan', lat: 23.5, lon: 121.5, baseProb: 0.35, notes: 'Philippine Sea plate collision' },
+            { name: 'Vanuatu', lat: -15.5, lon: 167.0, baseProb: 0.36, notes: 'New Hebrides Trench' }
+        ];
+
+        // Lunar phase calculation (simplified)
+        function getLunarPhase(date) {
+            const synodic = 29.53058867;
+            const known = new Date('2000-01-06T18:14:00Z'); // Known new moon
+            const days = (date - known) / (1000 * 60 * 60 * 24);
+            const phase = ((days % synodic) + synodic) % synodic;
+            return {
+                phase: phase / synodic, // 0-1
+                name: phase < 1.85 ? 'New Moon' :
+                      phase < 7.38 ? 'Waxing Crescent' :
+                      phase < 9.23 ? 'First Quarter' :
+                      phase < 14.77 ? 'Waxing Gibbous' :
+                      phase < 16.61 ? 'Full Moon' :
+                      phase < 22.15 ? 'Waning Gibbous' :
+                      phase < 24.00 ? 'Last Quarter' : 'Waning Crescent',
+                tidalStress: Math.abs(Math.sin(phase / synodic * 2 * Math.PI)) // Peak at new/full
+            };
+        }
+
+        // DSO stress calculation
+        function calculateDSOStress(region, date) {
+            const lunar = getLunarPhase(date);
+            const dayOfYear = Math.floor((date - new Date(date.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+
+            // Seasonal modulation (higher in winter months for northern hemisphere)
+            const seasonalFactor = 1 + 0.1 * Math.cos((dayOfYear - 355) / 365 * 2 * Math.PI);
+
+            // Tidal stress enhancement (higher at new/full moon)
+            const tidalFactor = 1 + 0.25 * lunar.tidalStress;
+
+            // Regional variability
+            const regionalNoise = 0.9 + 0.2 * Math.random();
+
+            // Combined probability
+            const probability = Math.min(0.95, region.baseProb * seasonalFactor * tidalFactor * regionalNoise);
+
+            return {
+                probability: probability,
+                lunar: lunar,
+                seasonalFactor,
+                tidalFactor,
+                confidence: probability > 0.4 ? 'HIGH' : probability > 0.25 ? 'MODERATE' : 'LOW'
+            };
+        }
+
+        // Generate automatic predictions based on DSO model
+        async function generateAutoPredictions() {
+            const today = new Date();
+            const existingDates = predictions
+                .filter(p => p.autoGenerated)
+                .map(p => p.prediction.date);
+
+            let newPredictions = 0;
+
+            // Generate predictions for next 7 days
+            for (let dayOffset = 1; dayOffset <= 7; dayOffset++) {
+                const predDate = new Date(today);
+                predDate.setDate(predDate.getDate() + dayOffset);
+                const dateStr = predDate.toISOString().slice(0, 10);
+
+                // Skip if we already have predictions for this date
+                if (existingDates.includes(dateStr)) continue;
+
+                // Evaluate each region - pick only the TOP 2-3 highest stress regions per day
+                const regionStresses = DSO_REGIONS.map(region => ({
+                    region,
+                    stress: calculateDSOStress(region, predDate)
+                })).sort((a, b) => b.stress.probability - a.stress.probability);
+
+                // Only take top 3 regions with probability >= 0.45
+                const topRegions = regionStresses.filter(r => r.stress.probability >= 0.45).slice(0, 3);
+
+                for (const { region, stress } of topRegions) {
+                    // Extra check - only HIGH confidence predictions
+                    if (stress.confidence !== 'HIGH') continue;
+
+                    const id = `DSO-${dateStr.replace(/-/g, '')}-${String(predictions.length + 1).padStart(3, '0')}`;
+
+                    // Randomize location slightly within region
+                    const lat = region.lat + (Math.random() - 0.5) * 2;
+                    const lon = region.lon + (Math.random() - 0.5) * 2;
+
+                    // Estimate magnitude based on stress level
+                    const baseMag = 5.5 + stress.probability * 2;
+                    const mag = Math.round((baseMag + (Math.random() - 0.5) * 0.6) * 10) / 10;
+
+                    const predictionData = {
+                        id: id,
+                        created: new Date().toISOString(),
+                        type: 'event',
+                        status: 'active',
+                        autoGenerated: true,
+                        prediction: {
+                            date: dateStr,
+                            lat: Math.round(lat * 100) / 100,
+                            lon: Math.round(lon * 100) / 100,
+                            mag: mag,
+                            region: region.name,
+                            probability: Math.round(stress.probability * 100) / 100
+                        },
+                        tolerance: { km: 200, days: 3, mag: 0.3 },
+                        basis: `Auto-generated by DSO model. ${stress.lunar.name} (tidal stress: ${(stress.tidalFactor * 100 - 100).toFixed(0)}% enhancement). Seasonal factor: ${stress.seasonalFactor.toFixed(2)}. Regional base rate: ${(region.baseProb * 100).toFixed(0)}%. ${region.notes}.`,
+                        stressData: stress
+                    };
+
+                    // Create timestamp
+                    const timestamp = await createTimestamp(predictionData);
+                    predictionData.timestamp = timestamp;
+
+                    predictions.push(predictionData);
+                    newPredictions++;
+                }
+            }
+
+            if (newPredictions > 0) {
+                savePredictions();
+                console.log(`Generated ${newPredictions} new auto-predictions`);
+            }
+
+            return newPredictions;
+        }
+
+        // Clean up expired predictions (older than tolerance window with no match)
+        function cleanupExpiredPredictions() {
+            const now = new Date();
+            let expired = 0;
+
+            predictions.forEach(pred => {
+                if (pred.status !== 'active') return;
+
+                const predDate = new Date(pred.prediction.date);
+                const expiryDate = new Date(predDate);
+                expiryDate.setDate(expiryDate.getDate() + pred.tolerance.days + 1);
+
+                if (now > expiryDate) {
+                    // Mark as expired/miss if no validation within window
+                    pred.status = 'validated';
+                    pred.validation = {
+                        result: 'EXPIRED',
+                        notes: 'No matching earthquake within tolerance window',
+                        validatedAt: new Date().toISOString()
+                    };
+                    expired++;
+                }
+            });
+
+            if (expired > 0) {
+                savePredictions();
+                console.log(`Marked ${expired} predictions as expired`);
+            }
+
+            return expired;
+        }
+
+        // Full automation cycle
+        async function runAutomationCycle() {
+            console.log('Running DSO automation cycle...');
+
+            // 1. Generate new predictions
+            const newPreds = await generateAutoPredictions();
+
+            // 2. Fetch USGS data and validate
+            await autoValidateAll();
+
+            // 3. Cleanup expired predictions
+            cleanupExpiredPredictions();
+
+            // Update UI
+            renderAll();
+
+            const statusEl = document.getElementById('autoValidateStatus');
+            if (statusEl) {
+                statusEl.innerHTML = `
+                    <span style="color: var(--accent-green);">&#10003;</span>
+                    Last cycle: ${new Date().toLocaleTimeString()} |
+                    ${newPreds} new predictions |
+                    ${recentEarthquakes.length} USGS events loaded
+                `;
+            }
+        }
+
+        // =====================================================
+        // INITIALIZATION
+        // =====================================================
+        function initApp() {
+            loadPredictions();
+            initTabs();
+            renderClimatologyTable();
+            renderAll();
+
+            // Set default date to today + 7 days
+            const nextWeek = new Date();
+            nextWeek.setDate(nextWeek.getDate() + 7);
+            document.getElementById('predDate').valueAsDate = nextWeek;
+
+            // Start automation cycle
+            runAutomationCycle();
+
+            // Run every 5 minutes
+            setInterval(runAutomationCycle, 5 * 60 * 1000);
+        }
+
+        // Initialize if already authenticated
+        if (sessionStorage.getItem('dso_authenticated') === 'true') {
+            window.addEventListener('load', initApp);
+        }
+    </script>
+</body>
+</html>

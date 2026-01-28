@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSO - Ethics & Risk Mitigation</title>
+    <link rel="stylesheet" href="shared/styles.css">
+    <script src="shared/nav.js"></script>
+    <style>
+        .ethics-hero {
+            background: linear-gradient(135deg, rgba(155, 89, 182, 0.1), rgba(124, 179, 255, 0.1));
+            border: 1px solid var(--accent-purple);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .ethics-hero h2 {
+            font-size: 1.8em;
+            color: var(--accent-purple);
+            margin-bottom: 15px;
+        }
+
+        .ethics-hero p {
+            color: var(--text-secondary);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .principle-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--accent-blue);
+        }
+
+        .principle-card.caution {
+            border-left-color: var(--accent-orange);
+        }
+
+        .principle-card.positive {
+            border-left-color: var(--accent-green);
+        }
+
+        .principle-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .principle-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+        }
+
+        .principle-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .principle-content {
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .principle-content ul {
+            margin: 15px 0 15px 20px;
+        }
+
+        .principle-content li {
+            margin-bottom: 8px;
+        }
+
+        .risk-matrix {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .risk-cell {
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.85em;
+        }
+
+        .risk-cell.header {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+            color: var(--accent-blue);
+        }
+
+        .risk-cell.low {
+            background: rgba(78, 205, 196, 0.2);
+            color: var(--accent-green);
+        }
+
+        .risk-cell.medium {
+            background: rgba(243, 156, 18, 0.2);
+            color: var(--accent-orange);
+        }
+
+        .risk-cell.high {
+            background: rgba(231, 76, 60, 0.2);
+            color: var(--accent-red);
+        }
+
+        .mitigation-list {
+            list-style: none;
+        }
+
+        .mitigation-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 15px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .mitigation-status {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9em;
+            flex-shrink: 0;
+        }
+
+        .mitigation-status.implemented {
+            background: var(--accent-green);
+            color: #fff;
+        }
+
+        .mitigation-status.planned {
+            background: var(--accent-orange);
+            color: #fff;
+        }
+
+        .mitigation-status.ongoing {
+            background: var(--accent-blue);
+            color: #fff;
+        }
+
+        .stakeholder-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .stakeholder-card {
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stakeholder-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .stakeholder-name {
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .stakeholder-role {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+        }
+
+        .commitment-box {
+            background: linear-gradient(135deg, rgba(78, 205, 196, 0.1), rgba(124, 179, 255, 0.1));
+            border: 1px solid var(--accent-green);
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .commitment-box h3 {
+            color: var(--accent-green);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        @media (max-width: 800px) {
+            .stakeholder-grid {
+                grid-template-columns: 1fr;
+            }
+            .risk-matrix {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body data-dso-page="ethics">
+    <div class="page-container">
+        <div class="page-header">
+            <h1>&#9878; Ethics & Risk Mitigation</h1>
+            <p class="subtitle">Responsible development and deployment of seismic forecasting technology</p>
+        </div>
+
+        <!-- Hero Section -->
+        <div class="ethics-hero">
+            <h2>Commitment to Responsible Innovation</h2>
+            <p>
+                The DSO Core Observatory recognizes that seismic prediction carries significant societal implications.
+                We are committed to transparency, scientific rigor, and responsible communication of uncertainty
+                to ensure our technology benefits society while minimizing potential harms.
+            </p>
+        </div>
+
+        <!-- Core Principles -->
+        <div class="section">
+            <h2 class="section-title"><span>&#128220;</span> Core Ethical Principles</h2>
+
+            <div class="principle-card">
+                <div class="principle-header">
+                    <div class="principle-icon">&#128269;</div>
+                    <div class="principle-title">Scientific Transparency</div>
+                </div>
+                <div class="principle-content">
+                    <p>All methodologies, assumptions, and limitations are openly documented and available for peer review.</p>
+                    <ul>
+                        <li>Complete model documentation in the Whitepaper section</li>
+                        <li>Open source code for independent verification</li>
+                        <li>Regular publication of verification statistics</li>
+                        <li>Acknowledgment of model limitations in all communications</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="principle-card positive">
+                <div class="principle-header">
+                    <div class="principle-icon">&#128202;</div>
+                    <div class="principle-title">Uncertainty Quantification</div>
+                </div>
+                <div class="principle-content">
+                    <p>Every prediction includes rigorous uncertainty estimates. We never present forecasts as deterministic.</p>
+                    <ul>
+                        <li>Confidence intervals accompany all magnitude predictions</li>
+                        <li>Probability statements clearly indicate forecast uncertainty</li>
+                        <li>Error sources are explicitly identified and quantified</li>
+                        <li>Model confidence is distinguished from prediction certainty</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="principle-card caution">
+                <div class="principle-header">
+                    <div class="principle-icon">&#9888;</div>
+                    <div class="principle-title">Do No Harm</div>
+                </div>
+                <div class="principle-content">
+                    <p>We actively work to prevent misuse and minimize negative consequences of our forecasts.</p>
+                    <ul>
+                        <li>Forecasts are not intended to replace official emergency management guidance</li>
+                        <li>Communication designed to avoid panic or unnecessary economic disruption</li>
+                        <li>Clear disclaimers prevent misinterpretation as evacuation orders</li>
+                        <li>Collaboration with local authorities before public release</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Risk Assessment -->
+        <div class="section">
+            <h2 class="section-title"><span>&#127919;</span> Risk Assessment Matrix</h2>
+            <div class="card">
+                <div class="risk-matrix">
+                    <div class="risk-cell header">Risk Category</div>
+                    <div class="risk-cell header">Likelihood</div>
+                    <div class="risk-cell header">Impact</div>
+                    <div class="risk-cell header">Mitigation Status</div>
+
+                    <div class="risk-cell">False positive causing panic</div>
+                    <div class="risk-cell medium">Medium</div>
+                    <div class="risk-cell high">High</div>
+                    <div class="risk-cell low">Mitigated</div>
+
+                    <div class="risk-cell">False negative missing event</div>
+                    <div class="risk-cell medium">Medium</div>
+                    <div class="risk-cell high">High</div>
+                    <div class="risk-cell medium">Monitored</div>
+
+                    <div class="risk-cell">Misuse by bad actors</div>
+                    <div class="risk-cell low">Low</div>
+                    <div class="risk-cell medium">Medium</div>
+                    <div class="risk-cell low">Mitigated</div>
+
+                    <div class="risk-cell">Over-reliance on system</div>
+                    <div class="risk-cell medium">Medium</div>
+                    <div class="risk-cell medium">Medium</div>
+                    <div class="risk-cell medium">Monitored</div>
+
+                    <div class="risk-cell">Economic disruption</div>
+                    <div class="risk-cell low">Low</div>
+                    <div class="risk-cell medium">Medium</div>
+                    <div class="risk-cell low">Mitigated</div>
+
+                    <div class="risk-cell">Scientific credibility damage</div>
+                    <div class="risk-cell medium">Medium</div>
+                    <div class="risk-cell medium">Medium</div>
+                    <div class="risk-cell low">Mitigated</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mitigation Strategies -->
+        <div class="section">
+            <h2 class="section-title"><span>&#128737;</span> Mitigation Strategies</h2>
+            <div class="card">
+                <ul class="mitigation-list">
+                    <li class="mitigation-item">
+                        <div class="mitigation-status implemented">&#10003;</div>
+                        <div>
+                            <strong>Probabilistic Communication</strong>
+                            <p style="color: var(--text-secondary); font-size: 0.9em; margin-top: 5px;">
+                                All forecasts expressed as probability ranges, not deterministic predictions.
+                                Language reviewed to avoid implying certainty.
+                            </p>
+                        </div>
+                    </li>
+                    <li class="mitigation-item">
+                        <div class="mitigation-status implemented">&#10003;</div>
+                        <div>
+                            <strong>Tiered Dissemination</strong>
+                            <p style="color: var(--text-secondary); font-size: 0.9em; margin-top: 5px;">
+                                Technical bulletins to agencies first, simplified public communications second.
+                                24-hour coordination window with emergency management.
+                            </p>
+                        </div>
+                    </li>
+                    <li class="mitigation-item">
+                        <div class="mitigation-status ongoing">&#8635;</div>
+                        <div>
+                            <strong>Continuous Verification</strong>
+                            <p style="color: var(--text-secondary); font-size: 0.9em; margin-top: 5px;">
+                                Real-time tracking of prediction accuracy. Automatic alerts if skill scores
+                                drop below acceptable thresholds.
+                            </p>
+                        </div>
+                    </li>
+                    <li class="mitigation-item">
+                        <div class="mitigation-status implemented">&#10003;</div>
+                        <div>
+                            <strong>Clear Disclaimers</strong>
+                            <p style="color: var(--text-secondary); font-size: 0.9em; margin-top: 5px;">
+                                Every forecast includes prominent disclaimer about experimental nature
+                                and recommendation to follow official guidance.
+                            </p>
+                        </div>
+                    </li>
+                    <li class="mitigation-item">
+                        <div class="mitigation-status planned">&#9679;</div>
+                        <div>
+                            <strong>External Ethics Review Board</strong>
+                            <p style="color: var(--text-secondary); font-size: 0.9em; margin-top: 5px;">
+                                Establishing independent review board with seismologists, ethicists,
+                                and emergency management professionals. Target: Q2 2026.
+                            </p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Stakeholder Responsibilities -->
+        <div class="section">
+            <h2 class="section-title"><span>&#128101;</span> Stakeholder Responsibilities</h2>
+            <div class="stakeholder-grid">
+                <div class="stakeholder-card">
+                    <div class="stakeholder-icon">&#128300;</div>
+                    <div class="stakeholder-name">DSO Team</div>
+                    <div class="stakeholder-role">
+                        Maintain scientific rigor, communicate uncertainty honestly,
+                        continuously improve model accuracy, respond to feedback.
+                    </div>
+                </div>
+                <div class="stakeholder-card">
+                    <div class="stakeholder-icon">&#127970;</div>
+                    <div class="stakeholder-name">Government Agencies</div>
+                    <div class="stakeholder-role">
+                        Integrate DSO data with existing systems, provide feedback,
+                        maintain primary responsibility for public safety decisions.
+                    </div>
+                </div>
+                <div class="stakeholder-card">
+                    <div class="stakeholder-icon">&#128240;</div>
+                    <div class="stakeholder-name">Media</div>
+                    <div class="stakeholder-role">
+                        Report forecasts with full context, avoid sensationalism,
+                        include uncertainty information, direct public to official sources.
+                    </div>
+                </div>
+                <div class="stakeholder-card">
+                    <div class="stakeholder-icon">&#128101;</div>
+                    <div class="stakeholder-name">Public</div>
+                    <div class="stakeholder-role">
+                        Understand probabilistic nature, maintain general preparedness,
+                        follow official guidance for specific actions.
+                    </div>
+                </div>
+                <div class="stakeholder-card">
+                    <div class="stakeholder-icon">&#127891;</div>
+                    <div class="stakeholder-name">Scientific Community</div>
+                    <div class="stakeholder-role">
+                        Provide peer review, suggest improvements, collaborate on
+                        validation studies, maintain standards.
+                    </div>
+                </div>
+                <div class="stakeholder-card">
+                    <div class="stakeholder-icon">&#128188;</div>
+                    <div class="stakeholder-name">Industry</div>
+                    <div class="stakeholder-role">
+                        Use forecasts for risk assessment, not operational decisions.
+                        Contribute to model improvement through data sharing.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Known Limitations -->
+        <div class="card">
+            <div class="card-header">
+                <h2><span class="icon">&#9888;</span> Known Limitations</h2>
+            </div>
+            <div class="alert alert-warning" style="margin-bottom: 15px;">
+                <span>&#128300;</span>
+                <div>
+                    <strong>Experimental Technology:</strong> The DSO forecasting system is based on novel methodology
+                    that has not yet been validated over multiple seismic cycles (decades). Long-term reliability is unknown.
+                </div>
+            </div>
+            <ul style="color: var(--text-secondary); margin-left: 20px;">
+                <li style="margin-bottom: 10px;">
+                    <strong style="color: var(--text-primary);">Magnitude Precision:</strong>
+                    Typical prediction range is ±0.5 magnitude units. Individual event magnitudes cannot be predicted exactly.
+                </li>
+                <li style="margin-bottom: 10px;">
+                    <strong style="color: var(--text-primary);">Location Uncertainty:</strong>
+                    Stress zones are regional (hundreds of kilometers), not point locations. Specific fault identification not possible.
+                </li>
+                <li style="margin-bottom: 10px;">
+                    <strong style="color: var(--text-primary);">Timing:</strong>
+                    Time windows are typically 20-60 days. Precise event timing (day/hour) cannot be predicted.
+                </li>
+                <li style="margin-bottom: 10px;">
+                    <strong style="color: var(--text-primary);">False Negatives:</strong>
+                    Not all significant earthquakes will be predicted. The system supplements, not replaces, existing monitoring.
+                </li>
+                <li>
+                    <strong style="color: var(--text-primary);">Physical Mechanism:</strong>
+                    The core-mantle coupling hypothesis is theoretical. Causal relationship not definitively established.
+                </li>
+            </ul>
+        </div>
+
+        <!-- Commitment Statement -->
+        <div class="commitment-box">
+            <h3><span>&#128220;</span> Our Commitment</h3>
+            <p style="font-size: 1.1em; line-height: 1.8;">
+                We commit to operating the DSO Core Observatory with the highest ethical standards.
+                Our goal is to contribute to earthquake science and public safety, not to replace
+                established institutions or create undue alarm. We will continuously evaluate our
+                impact, incorporate feedback, and adjust our practices to ensure our work benefits
+                society. If evidence suggests our forecasts cause more harm than good, we will
+                modify or discontinue public dissemination.
+            </p>
+            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--accent-green);">
+                <strong>Contact for Ethics Concerns:</strong>
+                <span style="color: var(--text-secondary);"> ethics@dso-observatory.org</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
