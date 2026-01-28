@@ -9,7 +9,7 @@ const DSO_NAV = {
             label: 'Observatory',
             icon: '&#127757;',
             items: [
-                { id: 'realtime', label: 'Real-Time Dashboard', href: 'realtime_dashboard.html', icon: '&#128200;' },
+                { id: 'realtime', label: 'Real-Time Dashboard', href: 'index.html', icon: '&#128200;' },
                 { id: 'home', label: 'Home Analyzer', href: 'dso_home_analyzer.html', icon: '&#127968;' },
                 { id: 'mechanics', label: 'Core Mechanics', href: 'dso_core_mechanics.html', icon: '&#9881;' },
                 { id: 'signal', label: 'Signal Detection', href: 'dso_signal_detection.html', icon: '&#128225;' },
@@ -373,3 +373,4 @@ document.addEventListener('DOMContentLoaded', () => {
         DSO_NAV.init(pageId);
     }
 });
+
